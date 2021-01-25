@@ -1,0 +1,7 @@
+node_modules
+packages/server/node_modules
+packages/client/node_modules
+packages/shared/node_modules
+packages/server/dist
+packages/client/public/scripts
+packages/shared/dist

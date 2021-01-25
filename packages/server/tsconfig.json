@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "strict": true,
+    "composite": true,
+    "esModuleInterop": true,
+    "tsBuildInfoFile": "buildcache/tsconfig.tsbuildinfo"
+  },
+  "include": ["src"],
+  "references": [{"path": "../shared"}]
+}

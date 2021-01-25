@@ -1,0 +1,15 @@
+canvas {
+    border: solid cornflowerblue;
+    border-width: thin thin thin thick;
+}
+
+.highlight {
+    border-style: dashed;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-content: center;
+    align-items: center;
+}

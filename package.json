@@ -1,0 +1,31 @@
+{
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "clean-and-build:dev": "tsc -b --clean && tsc -b --verbose",
+    "start": "node packages/server/dist/main.js",
+    "nodemon": "nodemon",
+    "build:dev": "tsc -b --verbose",
+
+    "deploy to heroku": "git push heroku master",
+    "postinstall": "tsc -b",
+
+    "build clean dry": "tsc -b --clean --dry",
+    "build watch": "tsc -b --watch --verbose",
+    "run-server:dev": "ts-node-script packages/server/src/main.ts",
+    "run-server2:dev": "ts-node-dev --script-mode --watch packages/shared/dist packages/server/src/main.ts"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^4.13.0",
+    "@typescript-eslint/parser": "^4.13.0",
+    "eslint": "^7.18.0",
+    "eslint-config-prettier": "^7.1.0",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-prettier": "^3.3.1",
+    "nodemon": "^2.0.7",
+    "prettier": "^2.2.1",
+    "ts-node": "^9.1.1",
+    "ts-node-dev": "^1.1.1"
+  }
+}

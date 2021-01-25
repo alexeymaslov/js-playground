@@ -1,0 +1,6 @@
+{
+  "name": "@my/client",
+  "devDependencies": {
+    "typescript": "^4.1.3"
+  }
+}
