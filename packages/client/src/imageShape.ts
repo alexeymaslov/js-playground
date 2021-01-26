@@ -1,4 +1,5 @@
 import { RectShape } from './rectShape.js';
+import { Uuid } from '@my/shared';
 
 export class ImageShape extends RectShape {
   image: CanvasImageSource;
@@ -8,9 +9,10 @@ export class ImageShape extends RectShape {
     y: number,
     width: number,
     height: number,
+    uuid: Uuid,
     image: CanvasImageSource
   ) {
-    super(x, y, width, height);
+    super(x, y, width, height, uuid);
     this.image = image;
   }
 

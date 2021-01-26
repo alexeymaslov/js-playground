@@ -1,4 +1,4 @@
-import { error } from './helpers.js';
+import { error, uuidv4 } from './helpers.js';
 import { RectShape } from './rectShape.js';
 import { EventCanvasPositionGetter } from './eventCanvasPositionGetter.js';
 import { FilledShape } from './filledShape.js';
@@ -6,6 +6,7 @@ import {
   CanvasEventHandler,
   DefaultCanvasEventHandler
 } from './canvasEventHandler.js';
+import { Uuid } from '@my/shared';
 
 export class CanvasWrapper {
   private readonly canvas: HTMLCanvasElement;
@@ -17,6 +18,8 @@ export class CanvasWrapper {
     this
   );
   onRectShapeUpdated: ((rectShape: RectShape) => void) | null = null;
+  onRectShapeCreated: ((rectShape: RectShape) => void) | null = null;
+  onRectShapeDeleted: ((rectShape: RectShape) => void) | null = null;
 
   set canvasEventHandler(newHandler: CanvasEventHandler) {
     this._canvasEventHandler = newHandler;
@@ -33,15 +36,16 @@ export class CanvasWrapper {
 
     canvas.addEventListener('dblclick', (ev) => {
       const mousePosition = eventCanvasPositionGetter.get(ev);
-      this.addRectShape(
-        new FilledShape(
-          mousePosition.x - 10,
-          mousePosition.y - 10,
-          20,
-          20,
-          'rgba(128, 0, 128, .5)'
-        )
+      const rectShape = new FilledShape(
+        mousePosition.x - 10,
+        mousePosition.y - 10,
+        20,
+        20,
+        uuidv4(),
+        'rgba(128, 0, 128, .5)'
       );
+      this.addRectShape(rectShape);
+      this.onRectShapeCreated?.(rectShape);
     });
 
     canvas.addEventListener('mousedown', (ev) => this.handleDownEvent(ev));
@@ -54,6 +58,26 @@ export class CanvasWrapper {
     // setInterval(() => this.draw(), 30);
   }
 
+  getRectShapeById(id: number): RectShape | null {
+    for (const rectShape of this.rectShapes) {
+      if (rectShape.id === id) {
+        return rectShape;
+      }
+    }
+
+    return null;
+  }
+
+  getRectShapeByUuid(uuid: Uuid): RectShape | null {
+    for (const rectShape of this.rectShapes) {
+      if (rectShape.uuid === uuid) {
+        return rectShape;
+      }
+    }
+
+    return null;
+  }
+
   invalidate(): void {
     this.isValid = false;
   }
@@ -63,6 +87,9 @@ export class CanvasWrapper {
   }
 
   addRectShape(rectShape: RectShape): void {
+    console.log(
+      `adding rectShape={id: ${rectShape.id}, uuid: ${rectShape.uuid}}`
+    );
     this.rectShapes.push(rectShape);
     this.isValid = false;
   }
@@ -83,7 +110,17 @@ export class CanvasWrapper {
   draw(): void {
     requestAnimationFrame(() => this.draw());
 
-    // todo handle window resize here?
+    // it seems easier to handle window resize with this simple if
+    // todo remove magic constants. should determine them based on available space for canvas element (or it's parent)
+    if (
+      this.canvas.width !== window.innerWidth - 20 ||
+      this.canvas.height !== window.innerHeight - 150
+    ) {
+      this.canvas.width = window.innerWidth - 20;
+      this.canvas.height = window.innerHeight - 150;
+      this.invalidate();
+    }
+
     if (this.isValid) return;
 
     this.clear();
@@ -94,7 +131,9 @@ export class CanvasWrapper {
 
   private drawRectShapes() {
     for (const rectShape of this.rectShapes) {
-      if (this.isInCanvasBounds(rectShape)) rectShape.draw(this.context);
+      if (this.isInCanvasBounds(rectShape)) {
+        rectShape.draw(this.context);
+      }
     }
   }
 

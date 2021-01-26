@@ -1,14 +1,25 @@
+import { Uuid } from '@my/shared';
+
 export abstract class RectShape {
   x: number;
   y: number;
   width: number;
   height: number;
+  id: number | null = null;
+  uuid: Uuid;
 
-  protected constructor(x: number, y: number, width: number, height: number) {
+  protected constructor(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    uuid: Uuid
+  ) {
     this.x = x;
     this.y = y;
     this.width = width;
     this.height = height;
+    this.uuid = uuid;
   }
 
   abstract draw(context: CanvasRenderingContext2D): void;
@@ -16,6 +27,12 @@ export abstract class RectShape {
   drawSelectionRect(context: CanvasRenderingContext2D): void {
     context.strokeStyle = 'salmon'; // todo move to constants?
     context.lineWidth = 1.5; // todo move to constants?
+    context.strokeRect(this.x, this.y, this.width, this.height);
+  }
+
+  drawHoverRect(context: CanvasRenderingContext2D): void {
+    context.strokeStyle = 'LightSteelBlue'; // todo move to constants?
+    context.lineWidth = 2.5; // todo move to constants?
     context.strokeRect(this.x, this.y, this.width, this.height);
   }
 

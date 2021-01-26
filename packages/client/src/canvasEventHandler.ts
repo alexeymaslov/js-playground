@@ -15,6 +15,7 @@ export interface CanvasEventHandler {
 }
 
 export abstract class CanvasEventHandlerBase implements CanvasEventHandler {
+  protected rectShapeUnderMouse: RectShape | null = null;
   protected readonly canvasWrapper: CanvasWrapper;
 
   protected constructor(canvasWrapper: CanvasWrapper) {
@@ -26,18 +27,34 @@ export abstract class CanvasEventHandlerBase implements CanvasEventHandler {
     // do nothing
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   handleMoveEvent(x: number, y: number): void {
-    // do nothing
+    const rectShape = this.canvasWrapper.getFirstRectShapeContaining(x, y);
+    this.updateRectShapeUnderMouse(rectShape);
+  }
+
+  protected updateRectShapeUnderMouse(rectShape: RectShape | null): void {
+    if (rectShape === null) {
+      if (this.rectShapeUnderMouse !== null) {
+        this.rectShapeUnderMouse = null;
+        this.canvasWrapper.invalidate();
+      }
+    } else {
+      if (this.rectShapeUnderMouse?.id !== rectShape.id) {
+        this.rectShapeUnderMouse = rectShape;
+        this.canvasWrapper.invalidate();
+      }
+    }
   }
 
   handleUpEvent(): void {
     // do nothing
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   draw(context: CanvasRenderingContext2D): void {
-    // do nothing
+    if (this.rectShapeUnderMouse) {
+      this.rectShapeUnderMouse.drawHoverRect(context);
+    }
+    // this.drawResizeHandles(context);
   }
 
   handleRemoveEvent(): void {
@@ -65,7 +82,7 @@ export class DefaultCanvasEventHandler extends CanvasEventHandlerBase {
 
 export class SelectedCanvasEventHandler extends CanvasEventHandlerBase {
   private readonly resizeHandles: readonly FilledShape[];
-  private readonly resizeBoxSize: number = 5;
+  private readonly resizeBoxSize: number = 4;
   protected readonly selectedRectShape: RectShape;
   private selectedResizeHandleIndex: number | null = null;
 
@@ -76,7 +93,14 @@ export class SelectedCanvasEventHandler extends CanvasEventHandlerBase {
     const resizeHandles = [];
     for (let i = 0; i < 8; i++) {
       resizeHandles.push(
-        new FilledShape(0, 0, this.resizeBoxSize, this.resizeBoxSize, 'tomato')
+        new FilledShape(
+          0,
+          0,
+          this.resizeBoxSize,
+          this.resizeBoxSize,
+          '',
+          'tomato'
+        )
       );
     }
     this.resizeHandles = resizeHandles;
@@ -101,6 +125,7 @@ export class SelectedCanvasEventHandler extends CanvasEventHandlerBase {
           y
         );
       } else {
+        this.canvasWrapper.invalidate();
         this.canvasWrapper.canvasEventHandler = new DefaultCanvasEventHandler(
           this.canvasWrapper
         );
@@ -109,6 +134,9 @@ export class SelectedCanvasEventHandler extends CanvasEventHandlerBase {
   }
 
   handleMoveEvent(x: number, y: number): void {
+    const rectShape = this.canvasWrapper.getFirstRectShapeContaining(x, y);
+    this.updateRectShapeUnderMouse(rectShape);
+
     for (let i = 0; i < this.resizeHandles.length; i++) {
       const resizeHandle = this.resizeHandles[i];
       if (resizeHandle.contains(x, y)) {
@@ -119,7 +147,11 @@ export class SelectedCanvasEventHandler extends CanvasEventHandlerBase {
     }
 
     this.selectedResizeHandleIndex = null;
-    this.canvasWrapper.updateCursorStyle('auto');
+    if (rectShape !== null && rectShape.id === this.selectedRectShape.id) {
+      this.canvasWrapper.updateCursorStyle('move');
+    } else {
+      this.canvasWrapper.updateCursorStyle('auto');
+    }
   }
 
   private updateCanvasCursorStyle(i: number) {
@@ -152,6 +184,9 @@ export class SelectedCanvasEventHandler extends CanvasEventHandlerBase {
   }
 
   draw(context: CanvasRenderingContext2D): void {
+    if (this.selectedRectShape.id !== this.rectShapeUnderMouse?.id) {
+      super.draw(context);
+    }
     this.selectedRectShape.drawSelectionRect(context);
     this.drawResizeHandles(context);
   }
@@ -190,6 +225,7 @@ export class SelectedCanvasEventHandler extends CanvasEventHandlerBase {
 
   handleRemoveEvent(): void {
     this.canvasWrapper.removeRectShape(this.selectedRectShape);
+    this.canvasWrapper.onRectShapeDeleted?.(this.selectedRectShape);
     this.canvasWrapper.canvasEventHandler = new DefaultCanvasEventHandler(
       this.canvasWrapper
     );
@@ -207,6 +243,7 @@ export class DragCanvasEventHandler extends SelectedCanvasEventHandler {
     y: number
   ) {
     super(canvasWrapper, selectedRectShape);
+    this.canvasWrapper.updateCursorStyle('move');
     this.dragOffsetX = x - selectedRectShape.x;
     this.dragOffsetY = y - selectedRectShape.y;
   }

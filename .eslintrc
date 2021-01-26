@@ -9,10 +9,7 @@
     "eslint:recommended",
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:@typescript-eslint/recommended",
-    "prettier",
-    "plugin:import/errors",
-    "plugin:import/warnings",
-    "plugin:import/typescript"
+    "prettier"
   ],
   "rules": {
     "prettier/prettier": 2

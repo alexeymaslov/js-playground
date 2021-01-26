@@ -1,4 +1,5 @@
 import { RectShape } from './rectShape.js';
+import { Uuid } from '@my/shared';
 
 export class FilledShape extends RectShape {
   fillStyle: string;
@@ -8,9 +9,10 @@ export class FilledShape extends RectShape {
     y: number,
     width: number,
     height: number,
+    uuid: Uuid,
     fillStyle: string
   ) {
-    super(x, y, width, height);
+    super(x, y, width, height, uuid);
     this.fillStyle = fillStyle;
   }
 

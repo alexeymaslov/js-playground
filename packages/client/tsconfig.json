@@ -1,11 +1,14 @@
 {
   "compilerOptions": {
-    "outDir": "public/scripts",
+    "outDir": "dist",
     "rootDir": "src",
     "strict": true,
     "composite": true,
     "tsBuildInfoFile": "buildcache/tsconfig.tsbuildinfo",
-    "target": "ES5"
+    "target": "ES5",
+    "module": "ES6",
+    "moduleResolution": "Node",
+    "sourceMap": true
   },
   "include": ["src"],
   "references": [{ "path": "../shared" }]
