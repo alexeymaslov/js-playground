@@ -9,7 +9,6 @@
     "build:dev": "tsc -b --verbose",
 
     "deploy to heroku": "git push heroku master",
-    "postinstall": "tsc -b",
 
     "watch client": "nodemon --config nodemon.server.json",
 
