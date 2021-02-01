@@ -26,7 +26,8 @@ app.get('/events', async (req, res) => {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     // eslint-disable-next-line prettier/prettier
-    Connection: 'keep-alive'
+    'Connection': 'keep-alive',
+    'Access-Control-Allow-Origin': '*'
   });
 
   const history = events.join('');
