@@ -10,6 +10,7 @@ import {
   animals
 } from 'unique-names-generator';
 import './styles.css';
+import { getRandomColor } from '@my/shared/dist/colors';
 
 const backendUrl = 'https://roll202.herokuapp.com';
 
@@ -128,15 +129,19 @@ eventSource.addEventListener('remove', (evt) => {
   }
 });
 
+// todo wtf
+//  >> colorr
+//  >> colorrr
 let username = localStorage.getItem('username');
 let colorr = localStorage.getItem('color');
 if (username === null || colorr === null) {
   const adjective = uniqueNamesGenerator({
     dictionaries: [adjectives]
   });
-  const colorrr = uniqueNamesGenerator({
-    dictionaries: [colors]
-  });
+  const colorrr = getRandomColor();
+  // uniqueNamesGenerator({
+  //   dictionaries: [colors]
+  // });
   const animal = uniqueNamesGenerator({
     dictionaries: [animals]
   });
