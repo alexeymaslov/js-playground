@@ -9,6 +9,7 @@
     "build:dev": "tsc -b --verbose",
 
     "deploy to heroku": "git push heroku master",
+    "build": "cd packages/client && npm run build && cd ../server && npm run build",
 
     "watch client": "nodemon --config nodemon.server.json",
 

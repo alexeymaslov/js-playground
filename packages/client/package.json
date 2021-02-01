@@ -2,7 +2,7 @@
   "name": "@my/client",
   "private": true,
   "scripts": {
-    "postinstall": "webpack --mode production",
+    "build": "webpack --mode production",
     "watch": "webpack --watch --progress --mode development",
     "build:dev": "webpack --mode development"
   },
