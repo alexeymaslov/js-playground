@@ -1,4 +1,4 @@
-import { Uuid } from '@my/shared';
+import { Uuid } from './index';
 
 export function error<T>(message: string): T {
   throw new Error(message);

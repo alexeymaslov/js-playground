@@ -7,6 +7,7 @@ export type ShapeGeometry = {
   y: number;
   width: number;
   height: number;
+  color: string;
 };
 
 export type Uuid = string;
@@ -18,3 +19,5 @@ export type HasUuid = {
 export type AddRequestData = ShapeGeometry & HasUuid;
 
 export type AddEventData = AddRequestData & HasId;
+
+export * from './helpers';

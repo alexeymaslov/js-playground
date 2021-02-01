@@ -1,6 +1,6 @@
-import { CanvasWrapper } from './canvasWrapper.js';
-import { RectShape } from './rectShape.js';
-import { FilledShape } from './filledShape.js';
+import { CanvasWrapper } from './canvasWrapper';
+import { RectShape } from './rectShape';
+import { FilledShape } from './filledShape';
 
 export interface CanvasEventHandler {
   handleDownEvent(x: number, y: number): void;

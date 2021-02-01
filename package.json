@@ -11,6 +11,8 @@
     "deploy to heroku": "git push heroku master",
     "postinstall": "tsc -b",
 
+    "watch client": "nodemon --config nodemon.server.json",
+
     "build clean dry": "tsc -b --clean --dry",
     "build watch": "tsc -b --watch --verbose",
     "run-server:dev": "ts-node-script packages/server/src/main.ts",

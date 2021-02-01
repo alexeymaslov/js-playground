@@ -1,8 +1,7 @@
 {
   "name": "@my/server",
   "scripts": {
-    "build": "tsc -b",
-    "start": "node dist/server.js"
+    "postinstall": "tsc -b"
   },
   "devDependencies": {
     "@types/express": "^4.17.11",

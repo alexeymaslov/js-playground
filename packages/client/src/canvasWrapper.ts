@@ -1,11 +1,12 @@
-import { error, uuidv4 } from './helpers.js';
-import { RectShape } from './rectShape.js';
-import { EventCanvasPositionGetter } from './eventCanvasPositionGetter.js';
-import { FilledShape } from './filledShape.js';
+import { RectShape } from './rectShape';
+import { EventCanvasPositionGetter } from './eventCanvasPositionGetter';
+import { FilledShape } from './filledShape';
 import {
   CanvasEventHandler,
   DefaultCanvasEventHandler
-} from './canvasEventHandler.js';
+} from './canvasEventHandler';
+import { color } from './index';
+import { error, uuidv4 } from '@my/shared';
 import { Uuid } from '@my/shared';
 
 export class CanvasWrapper {
@@ -42,7 +43,7 @@ export class CanvasWrapper {
         20,
         20,
         uuidv4(),
-        'rgba(128, 0, 128, .5)'
+        color
       );
       this.addRectShape(rectShape);
       this.onRectShapeCreated?.(rectShape);
@@ -124,9 +125,22 @@ export class CanvasWrapper {
     if (this.isValid) return;
 
     this.clear();
+    this.drawDots();
     this.drawRectShapes();
     this._canvasEventHandler.draw(this.context);
     this.isValid = true;
+  }
+
+  private drawDots() {
+    const step = 33;
+    for (let x = (step * 3) / 4; x < this.canvas.width; x += step) {
+      for (let y = (step * 3) / 4; y < this.canvas.height; y += step) {
+        this.context.beginPath();
+        this.context.arc(x, y, 1.25, 0, 2 * Math.PI);
+        this.context.fillStyle = 'DarkSlateGray';
+        this.context.fill();
+      }
+    }
   }
 
   private drawRectShapes() {

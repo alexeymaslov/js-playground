@@ -4,12 +4,13 @@
     "rootDir": "src",
     "strict": true,
     "composite": true,
-    "tsBuildInfoFile": "buildcache/tsconfig.tsbuildinfo",
+    "tsBuildInfoFile": "./buildcache/tsconfig.tsbuildinfo",
     "target": "ES5",
     "module": "ES6",
     "moduleResolution": "Node",
     "sourceMap": true
   },
   "include": ["src"],
-  "references": [{ "path": "../shared" }]
+  "references": [{ "path": "../shared" }],
+  "verbose": true
 }

@@ -6,7 +6,7 @@
     "declarationMap": true,
     "sourceMap": true,
     "composite": true,
-    "tsBuildInfoFile": "buildcache/tsconfig.tsbuildinfo"
+//    "tsBuildInfoFile": "./buildcache/tsconfig.tsbuildinfo"
   },
   "include": ["src"]
 }

@@ -1,16 +1,19 @@
-import { CanvasWrapper } from './canvasWrapper.js';
-import { FilledShape } from './filledShape.js';
-import { EventCanvasPositionGetter } from './eventCanvasPositionGetter.js';
-import { RectShape } from './rectShape.js';
+import { CanvasWrapper } from './canvasWrapper';
+import { FilledShape } from './filledShape';
+import { EventCanvasPositionGetter } from './eventCanvasPositionGetter';
+import { RectShape } from './rectShape';
 import { AddEventData, AddRequestData, HasId, Shape } from '@my/shared';
 import {
   uniqueNamesGenerator,
   adjectives,
   colors,
   animals
-} from '../node_modules/unique-names-generator/dist/index.js';
+} from 'unique-names-generator';
+import './styles.css';
 
 const backendUrl = 'http://localhost:5000';
+
+const asda = "asd";
 
 const canvas = document.getElementById('canvas');
 if (!(canvas instanceof HTMLCanvasElement))
@@ -26,7 +29,8 @@ canvasWrapper.onRectShapeCreated = async (rectShape: RectShape) => {
     y: rectShape.y,
     width: rectShape.width,
     height: rectShape.height,
-    uuid: rectShape.uuid
+    uuid: rectShape.uuid,
+    color: (rectShape as FilledShape).fillStyle // todo ugly
   };
   const response = await fetch(`${backendUrl}/add`, {
     method: 'POST',
@@ -48,7 +52,8 @@ canvasWrapper.onRectShapeUpdated = (rectShape: RectShape) => {
     y: rectShape.y,
     width: rectShape.width,
     height: rectShape.height,
-    id: rectShape.id
+    id: rectShape.id,
+    color: (rectShape as FilledShape).fillStyle // todo ugly
   };
   fetch(`${backendUrl}/resize`, {
     method: 'POST',
@@ -92,7 +97,7 @@ eventSource.addEventListener('add', (evt) => {
           addEventData.width,
           addEventData.height,
           addEventData.uuid,
-          'rgba(128, 0, 128, .5)'
+          addEventData.color
         );
         filledShape.id = addEventData.id;
         canvasWrapper.addRectShape(filledShape);
@@ -126,12 +131,24 @@ eventSource.addEventListener('remove', (evt) => {
 });
 
 let username = localStorage.getItem('username');
-if (username === null) {
-  username = uniqueNamesGenerator({
-    dictionaries: [adjectives, colors, animals],
-    separator: ' '
+let colorr = localStorage.getItem('color');
+if (username === null || colorr === null) {
+  const adjective = uniqueNamesGenerator({
+    dictionaries: [adjectives]
   });
+  const colorrr = uniqueNamesGenerator({
+    dictionaries: [colors]
+  });
+  const animal = uniqueNamesGenerator({
+    dictionaries: [animals]
+  });
+  username = `${adjective} ${colorrr} ${animal}`;
+  colorr = colorrr;
+  localStorage.setItem('username', username);
+  localStorage.setItem('color', colorrr);
 }
+
+export const color = colorr!;
 
 const paragraph = document.getElementById(
   'hello_username_text'

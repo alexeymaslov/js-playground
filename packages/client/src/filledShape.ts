@@ -1,4 +1,4 @@
-import { RectShape } from './rectShape.js';
+import { RectShape } from './rectShape';
 import { Uuid } from '@my/shared';
 
 export class FilledShape extends RectShape {

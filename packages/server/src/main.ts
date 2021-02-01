@@ -2,6 +2,7 @@ import express from 'express';
 import EventEmitter from 'events';
 import { AddEventData, AddRequestData, HasId, Shape } from '@my/shared';
 
+// todo looks like it is a bad practise to catch it like that
 process.on('uncaughtException', function (err) {
   console.log(err);
 });
@@ -16,15 +17,16 @@ const events: string[] = [];
 
 app.use(express.json());
 
-// expected to run server from monorepo root with node packages/server/server/dist/main.js
-app.use(express.static('packages/client/public'));
+// expected to run server from monorepo root with
+// 'node packages/server/server/dist/main.js'
+app.use(express.static('packages/client/dist'));
 
 app.get('/events', async (req, res) => {
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     // eslint-disable-next-line prettier/prettier
-    'Connection': 'keep-alive'
+    Connection: 'keep-alive'
   });
 
   const history = events.join('');
