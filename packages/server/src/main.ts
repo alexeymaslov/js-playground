@@ -22,6 +22,7 @@ app.use(express.json());
 app.use(express.static('packages/client/dist'));
 
 app.get('/events', async (req, res) => {
+  console.log('Call to events.');
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
@@ -30,8 +31,10 @@ app.get('/events', async (req, res) => {
     'Access-Control-Allow-Origin': '*'
   });
 
-  const history = events.join('');
-  res.write(history);
+  if (events.length > 0) {
+    const history = events.join('');
+    res.write(history);
+  }
   // res.statusCode = 200;
   // res.setHeader('Cache-Control', 'no-cache');
   // res.setHeader('Content-Type', 'text/event-stream');
