@@ -11,9 +11,7 @@ import {
 } from 'unique-names-generator';
 import './styles.css';
 
-const backendUrl = 'http://localhost:5000';
-
-const asda = "asd";
+const backendUrl = 'http://roll202.herokuapp.com';
 
 const canvas = document.getElementById('canvas');
 if (!(canvas instanceof HTMLCanvasElement))
