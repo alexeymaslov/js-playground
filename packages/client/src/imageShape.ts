@@ -17,6 +17,11 @@ export class ImageShape extends RectShape {
   }
 
   draw(context: CanvasRenderingContext2D): void {
-    context.drawImage(this.image, this.x, this.y, this.width, this.height);
+    context.drawImage(this.image, this.x, this.y, this.w, this.h);
+    super.draw(context);
   }
+}
+
+export function isImageShape(rectShape: RectShape): rectShape is ImageShape {
+  return (<ImageShape>rectShape).image !== undefined;
 }

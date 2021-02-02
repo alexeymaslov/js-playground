@@ -18,6 +18,7 @@ export class FilledShape extends RectShape {
 
   draw(context: CanvasRenderingContext2D): void {
     context.fillStyle = this.fillStyle;
-    context.fillRect(this.x, this.y, this.width, this.height);
+    context.fillRect(this.x, this.y, this.w, this.h);
+    super.draw(context);
   }
 }

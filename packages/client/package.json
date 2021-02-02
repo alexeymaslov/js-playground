@@ -3,7 +3,6 @@
   "private": true,
   "scripts": {
     "build": "webpack --mode production",
-    "watch": "webpack --watch --progress --mode development",
     "build:dev": "webpack --mode development"
   },
   "devDependencies": {

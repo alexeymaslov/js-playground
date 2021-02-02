@@ -12,15 +12,17 @@ import { Uuid } from '@my/shared';
 export class CanvasWrapper {
   private readonly canvas: HTMLCanvasElement;
   private readonly context: CanvasRenderingContext2D;
-  private readonly rectShapes: RectShape[] = [];
+  readonly rectShapes: RectShape[] = [];
   private isValid = false;
-  private readonly eventCanvasPositionGetter: EventCanvasPositionGetter;
-  private _canvasEventHandler: CanvasEventHandler = new DefaultCanvasEventHandler(
-    this
-  );
-  onRectShapeUpdated: ((rectShape: RectShape) => void) | null = null;
-  onRectShapeCreated: ((rectShape: RectShape) => void) | null = null;
-  onRectShapeDeleted: ((rectShape: RectShape) => void) | null = null;
+  readonly eventCanvasPositionGetter: EventCanvasPositionGetter;
+  private _canvasEventHandler: CanvasEventHandler;
+  readonly onRectShapeUpdated: (rectShape: RectShape) => void;
+  readonly onRectShapeCreated: (
+    rectShape: RectShape,
+    imageSource: string | null
+  ) => void;
+  readonly onRectShapeDeleted: (rectShape: RectShape) => void;
+  readonly onRectShapeSelected: (rectShape: RectShape | null) => void;
 
   set canvasEventHandler(newHandler: CanvasEventHandler) {
     this._canvasEventHandler = newHandler;
@@ -28,12 +30,22 @@ export class CanvasWrapper {
 
   constructor(
     canvas: HTMLCanvasElement,
-    eventCanvasPositionGetter: EventCanvasPositionGetter
+    eventCanvasPositionGetter: EventCanvasPositionGetter,
+    onRectShapeCreated: (rectShape: RectShape) => void,
+    onRectShapeUpdated: (rectShape: RectShape) => void,
+    onRectShapeDeleted: (rectShape: RectShape) => void,
+    onRectShapeSelected: (rectShape: RectShape | null) => void
   ) {
     this.canvas = canvas;
     this.eventCanvasPositionGetter = eventCanvasPositionGetter;
     this.context =
       canvas.getContext('2d') ?? error('canvas should have 2d context.');
+    this.onRectShapeUpdated = onRectShapeUpdated;
+    this.onRectShapeCreated = onRectShapeCreated;
+    this.onRectShapeDeleted = onRectShapeDeleted;
+    this.onRectShapeSelected = onRectShapeSelected;
+
+    this._canvasEventHandler = new DefaultCanvasEventHandler(this);
 
     canvas.addEventListener('dblclick', (ev) => {
       const mousePosition = eventCanvasPositionGetter.get(ev);
@@ -46,7 +58,7 @@ export class CanvasWrapper {
         color
       );
       this.addRectShape(rectShape);
-      this.onRectShapeCreated?.(rectShape);
+      this.onRectShapeCreated(rectShape, null);
     });
 
     canvas.addEventListener('mousedown', (ev) => this.handleDownEvent(ev));
@@ -56,7 +68,6 @@ export class CanvasWrapper {
     canvas.addEventListener('keydown', (ev) => this.handleKeyDownEvent(ev));
 
     requestAnimationFrame(() => this.draw());
-    // setInterval(() => this.draw(), 30);
   }
 
   getRectShapeById(id: number): RectShape | null {
@@ -151,12 +162,16 @@ export class CanvasWrapper {
     }
   }
 
-  private isInCanvasBounds(rectShape: RectShape): boolean {
+  private isInCanvasBounds(s: RectShape): boolean {
+    const xMin = s.w < 0 ? s.x + s.w : s.x;
+    const xMax = s.w < 0 ? s.x : s.x + s.w;
+    const yMin = s.h < 0 ? s.y + s.h : s.y;
+    const yMax = s.h < 0 ? s.y : s.y + s.h;
     return (
-      rectShape.x >= 0 &&
-      rectShape.x <= this.canvas.width &&
-      rectShape.y >= 0 &&
-      rectShape.y <= this.canvas.height
+      xMax >= 0 &&
+      xMin <= this.canvas.width &&
+      yMax >= 0 &&
+      yMin <= this.canvas.height
     );
   }
 

@@ -32,7 +32,9 @@ export class EventCanvasPositionGetter {
     this.htmlLeft = html?.offsetLeft ?? 0;
   }
 
-  get(event: MouseEvent | Touch /*| TouchInit*/): { x: number; y: number } {
+  get(
+    event: MouseEvent | Touch | DragEvent /*| TouchInit*/
+  ): { x: number; y: number } {
     let offsetX = 0;
     let offsetY = 0;
 

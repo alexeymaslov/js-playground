@@ -65,6 +65,7 @@ export abstract class CanvasEventHandlerBase implements CanvasEventHandler {
 export class DefaultCanvasEventHandler extends CanvasEventHandlerBase {
   constructor(canvasWrapper: CanvasWrapper) {
     super(canvasWrapper);
+    this.canvasWrapper.onRectShapeSelected(null);
   }
 
   handleDownEvent(x: number, y: number): void {
@@ -106,6 +107,7 @@ export class SelectedCanvasEventHandler extends CanvasEventHandlerBase {
     this.resizeHandles = resizeHandles;
     this.updateResizeHandlesPosition();
     this.canvasWrapper.invalidate();
+    this.canvasWrapper.onRectShapeSelected(this.selectedRectShape);
   }
 
   handleDownEvent(x: number, y: number): void {
@@ -201,8 +203,8 @@ export class SelectedCanvasEventHandler extends CanvasEventHandlerBase {
     const x = this.selectedRectShape.x;
     const y = this.selectedRectShape.y;
     const halvedSize = this.resizeBoxSize / 2;
-    const sW = this.selectedRectShape.width;
-    const sH = this.selectedRectShape.height;
+    const sW = this.selectedRectShape.w;
+    const sH = this.selectedRectShape.h;
     const halvedSW = sW / 2;
     const halvedSH = sH / 2;
     this.resizeHandles[0].x = x - halvedSize;
@@ -283,7 +285,7 @@ export class ResizeCanvasEventHandler extends SelectedCanvasEventHandler {
   }
 
   handleUpEvent(): void {
-    this.canvasWrapper.onRectShapeUpdated?.(this.selectedRectShape);
+    this.canvasWrapper.onRectShapeUpdated(this.selectedRectShape);
     this.canvasWrapper.updateCursorStyle('auto');
     this.canvasWrapper.canvasEventHandler = new SelectedCanvasEventHandler(
       this.canvasWrapper,
@@ -298,36 +300,36 @@ export class ResizeCanvasEventHandler extends SelectedCanvasEventHandler {
       case 0:
         this.selectedRectShape.x = x;
         this.selectedRectShape.y = y;
-        this.selectedRectShape.width += oldx - x;
-        this.selectedRectShape.height += oldy - y;
+        this.selectedRectShape.w += oldx - x;
+        this.selectedRectShape.h += oldy - y;
         break;
       case 1:
         this.selectedRectShape.y = y;
-        this.selectedRectShape.height += oldy - y;
+        this.selectedRectShape.h += oldy - y;
         break;
       case 2:
         this.selectedRectShape.y = y;
-        this.selectedRectShape.width = x - oldx;
-        this.selectedRectShape.height += oldy - y;
+        this.selectedRectShape.w = x - oldx;
+        this.selectedRectShape.h += oldy - y;
         break;
       case 3:
         this.selectedRectShape.x = x;
-        this.selectedRectShape.width += oldx - x;
+        this.selectedRectShape.w += oldx - x;
         break;
       case 4:
-        this.selectedRectShape.width = x - oldx;
+        this.selectedRectShape.w = x - oldx;
         break;
       case 5:
         this.selectedRectShape.x = x;
-        this.selectedRectShape.width += oldx - x;
-        this.selectedRectShape.height = y - oldy;
+        this.selectedRectShape.w += oldx - x;
+        this.selectedRectShape.h = y - oldy;
         break;
       case 6:
-        this.selectedRectShape.height = y - oldy;
+        this.selectedRectShape.h = y - oldy;
         break;
       case 7:
-        this.selectedRectShape.width = x - oldx;
-        this.selectedRectShape.height = y - oldy;
+        this.selectedRectShape.w = x - oldx;
+        this.selectedRectShape.h = y - oldy;
         break;
     }
   }

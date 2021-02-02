@@ -2,17 +2,31 @@ import { CanvasWrapper } from './canvasWrapper';
 import { FilledShape } from './filledShape';
 import { EventCanvasPositionGetter } from './eventCanvasPositionGetter';
 import { RectShape } from './rectShape';
-import { AddEventData, AddRequestData, HasId, Shape } from '@my/shared';
+import {
+  AddEventData,
+  AddRequestBody,
+  AddResponseBody,
+  RemoveEventData,
+  RemoveRequestBody,
+  isFilledRectData,
+  isImageRectData,
+  ResizeEventData,
+  ResizeRequestBody,
+  SelectEventData,
+  SelectRequestBody
+} from '@my/shared';
 import {
   uniqueNamesGenerator,
   adjectives,
-  colors,
   animals
 } from 'unique-names-generator';
 import './styles.css';
-import { getRandomColor } from '@my/shared/dist/colors';
+import { getRandomColor } from '@my/shared';
+import { initDragAndDrop } from './initDragAndDrop';
+import { ImageShape } from './imageShape';
 
-const backendUrl = 'https://roll202.herokuapp.com';
+const backendUrl = 'http://localhost:5000';
+// const backendUrl = 'https://roll202.herokuapp.com';
 
 const canvas = document.getElementById('canvas');
 if (!(canvas instanceof HTMLCanvasElement))
@@ -20,17 +34,31 @@ if (!(canvas instanceof HTMLCanvasElement))
     `Element with id=canvas should be instance of HTMLCanvasElement.`
   );
 
-const eventCanvasPositionGetter = new EventCanvasPositionGetter(canvas);
-const canvasWrapper = new CanvasWrapper(canvas, eventCanvasPositionGetter);
-canvasWrapper.onRectShapeCreated = async (rectShape: RectShape) => {
-  const body: AddRequestData = {
-    x: rectShape.x,
-    y: rectShape.y,
-    width: rectShape.width,
-    height: rectShape.height,
-    uuid: rectShape.uuid,
-    color: (rectShape as FilledShape).fillStyle // todo ugly
-  };
+const onRectShapeCreated = async (
+  rectShape: RectShape,
+  imageSource: string | null = null
+) => {
+  let body: AddRequestBody;
+  if (imageSource !== null) {
+    body = {
+      x: rectShape.x,
+      y: rectShape.y,
+      w: rectShape.w,
+      h: rectShape.h,
+      uuid: rectShape.uuid,
+      imageSource: imageSource
+    };
+  } else {
+    body = {
+      x: rectShape.x,
+      y: rectShape.y,
+      w: rectShape.w,
+      h: rectShape.h,
+      uuid: rectShape.uuid,
+      color: (rectShape as FilledShape).fillStyle
+    };
+  }
+
   const response = await fetch(`${backendUrl}/add`, {
     method: 'POST',
     headers: {
@@ -38,21 +66,22 @@ canvasWrapper.onRectShapeCreated = async (rectShape: RectShape) => {
     },
     body: JSON.stringify(body)
   });
-  const hasId = (await response.json()) as HasId;
-  rectShape.id = hasId.id;
+  const responseBody = (await response.json()) as AddResponseBody;
+  rectShape.id = responseBody.id;
 };
-canvasWrapper.onRectShapeUpdated = (rectShape: RectShape) => {
+
+const onRectShapeUpdated = (rectShape: RectShape) => {
   if (rectShape.id == null) {
     console.log('Will not send resize update because rect shape is missing id');
     return;
   }
-  const body: Shape = {
+
+  const body: ResizeRequestBody = {
     x: rectShape.x,
     y: rectShape.y,
-    width: rectShape.width,
-    height: rectShape.height,
-    id: rectShape.id,
-    color: (rectShape as FilledShape).fillStyle // todo ugly
+    w: rectShape.w,
+    h: rectShape.h,
+    id: rectShape.id
   };
   fetch(`${backendUrl}/resize`, {
     method: 'POST',
@@ -62,12 +91,14 @@ canvasWrapper.onRectShapeUpdated = (rectShape: RectShape) => {
     body: JSON.stringify(body)
   });
 };
-canvasWrapper.onRectShapeDeleted = (rectShape: RectShape) => {
+
+const onRectShapeDeleted = (rectShape: RectShape) => {
   if (rectShape.id == null) {
     console.log('Will not send remove update because rect shape is missing id');
     return;
   }
-  const body: HasId = {
+
+  const body: RemoveRequestBody = {
     id: rectShape.id
   };
   fetch(`${backendUrl}/remove`, {
@@ -79,7 +110,39 @@ canvasWrapper.onRectShapeDeleted = (rectShape: RectShape) => {
   });
 };
 
+const onRectShapeSelected = (rectShape: RectShape | null) => {
+  if (rectShape !== null && rectShape.id == null) {
+    console.log('Will not send select update because rect shape is missing id');
+    return;
+  }
+
+  const id = rectShape === null ? null : rectShape.id;
+  const body: SelectRequestBody = {
+    id: id,
+    selector: username
+  };
+  fetch(`${backendUrl}/select`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  });
+};
+
+const eventCanvasPositionGetter = new EventCanvasPositionGetter(canvas);
+const canvasWrapper = new CanvasWrapper(
+  canvas,
+  eventCanvasPositionGetter,
+  onRectShapeCreated,
+  onRectShapeUpdated,
+  onRectShapeDeleted,
+  onRectShapeSelected
+);
+initDragAndDrop(canvas, canvasWrapper);
+
 const eventSource = new EventSource(`${backendUrl}/events`);
+
 eventSource.addEventListener('add', (evt) => {
   console.log(evt);
   if (evt instanceof MessageEvent) {
@@ -90,41 +153,87 @@ eventSource.addEventListener('add', (evt) => {
         addEventData.uuid
       );
       if (localShapeWithUuid === null) {
-        const filledShape = new FilledShape(
-          addEventData.x,
-          addEventData.y,
-          addEventData.width,
-          addEventData.height,
-          addEventData.uuid,
-          addEventData.color
-        );
-        filledShape.id = addEventData.id;
-        canvasWrapper.addRectShape(filledShape);
+        if (isImageRectData(addEventData)) {
+          const image = new Image();
+          const imageShape = new ImageShape(
+            addEventData.x,
+            addEventData.y,
+            addEventData.w,
+            addEventData.h,
+            addEventData.uuid,
+            image
+          );
+          imageShape.id = addEventData.id;
+          canvasWrapper.addRectShape(imageShape);
+          image.onload = () => {
+            canvasWrapper.invalidate();
+          };
+          image.src = addEventData.imageSource;
+        } else if (isFilledRectData(addEventData)) {
+          const filledShape = new FilledShape(
+            addEventData.x,
+            addEventData.y,
+            addEventData.w,
+            addEventData.h,
+            addEventData.uuid,
+            addEventData.color
+          );
+          filledShape.id = addEventData.id;
+          canvasWrapper.addRectShape(filledShape);
+        }
       }
     }
   }
 });
+
 eventSource.addEventListener('resize', (evt) => {
   console.log(evt);
   if (evt instanceof MessageEvent) {
-    const shape = JSON.parse(evt.data) as Shape;
+    const shape = JSON.parse(evt.data) as ResizeEventData;
     const localShape = canvasWrapper.getRectShapeById(shape.id);
     if (localShape != null) {
       localShape.x = shape.x;
       localShape.y = shape.y;
-      localShape.width = shape.width;
-      localShape.height = shape.height;
+      localShape.w = shape.w;
+      localShape.h = shape.h;
       canvasWrapper.invalidate();
     }
   }
 });
+
 eventSource.addEventListener('remove', (evt) => {
   console.log(evt);
   if (evt instanceof MessageEvent) {
-    const hasId = JSON.parse(evt.data) as HasId;
+    const hasId = JSON.parse(evt.data) as RemoveEventData;
     const localShape = canvasWrapper.getRectShapeById(hasId.id);
     if (localShape != null) {
       canvasWrapper.removeRectShape(localShape);
+    }
+  }
+});
+
+eventSource.addEventListener('select', (evt) => {
+  console.log(evt);
+  if (evt instanceof MessageEvent) {
+    const data = JSON.parse(evt.data) as SelectEventData;
+
+    if (data.selector !== null && data.selector === username) return;
+
+    if (data.selector !== null) {
+      for (const rectShape of canvasWrapper.rectShapes) {
+        if (rectShape.selector === data.selector) {
+          rectShape.selector = null;
+          canvasWrapper.invalidate();
+        }
+      }
+    }
+
+    if (data.id !== null) {
+      const localShape = canvasWrapper.getRectShapeById(data.id);
+      if (localShape != null) {
+        localShape.selector = data.selector;
+        canvasWrapper.invalidate();
+      }
     }
   }
 });
