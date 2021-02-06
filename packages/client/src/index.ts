@@ -26,7 +26,7 @@ import { initDragAndDrop } from './initDragAndDrop';
 import { ImageShape } from './imageShape';
 
 // const backendUrl = 'http://localhost:5000';
-const backendUrl = 'https://roll202.herokuapp.com';
+const backendUrl = 'http://localhost:5000';
 
 const canvas = document.getElementById('canvas');
 if (!(canvas instanceof HTMLCanvasElement))

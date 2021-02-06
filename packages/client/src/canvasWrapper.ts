@@ -196,13 +196,14 @@ export class CanvasWrapper {
     }
   }
 
-  getFirstRectShapeContaining(x: number, y: number): RectShape | null {
+  getLastRectShapeContaining(x: number, y: number): RectShape | null {
+    let ret = null;
     for (const rectShape of this.rectShapes) {
       if (rectShape.contains(x, y)) {
-        return rectShape;
+        ret = rectShape;
       }
     }
 
-    return null;
+    return ret;
   }
 }

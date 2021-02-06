@@ -28,7 +28,7 @@ export abstract class CanvasEventHandlerBase implements CanvasEventHandler {
   }
 
   handleMoveEvent(x: number, y: number): void {
-    const rectShape = this.canvasWrapper.getFirstRectShapeContaining(x, y);
+    const rectShape = this.canvasWrapper.getLastRectShapeContaining(x, y);
     this.updateRectShapeUnderMouse(rectShape);
   }
 
@@ -69,7 +69,7 @@ export class DefaultCanvasEventHandler extends CanvasEventHandlerBase {
   }
 
   handleDownEvent(x: number, y: number): void {
-    const rectShape = this.canvasWrapper.getFirstRectShapeContaining(x, y);
+    const rectShape = this.canvasWrapper.getLastRectShapeContaining(x, y);
     if (rectShape !== null) {
       this.canvasWrapper.canvasEventHandler = new DragCanvasEventHandler(
         this.canvasWrapper,
@@ -118,7 +118,7 @@ export class SelectedCanvasEventHandler extends CanvasEventHandlerBase {
         this.selectedResizeHandleIndex
       );
     } else {
-      const rectShape = this.canvasWrapper.getFirstRectShapeContaining(x, y);
+      const rectShape = this.canvasWrapper.getLastRectShapeContaining(x, y);
       if (rectShape !== null) {
         this.canvasWrapper.canvasEventHandler = new DragCanvasEventHandler(
           this.canvasWrapper,
@@ -136,7 +136,7 @@ export class SelectedCanvasEventHandler extends CanvasEventHandlerBase {
   }
 
   handleMoveEvent(x: number, y: number): void {
-    const rectShape = this.canvasWrapper.getFirstRectShapeContaining(x, y);
+    const rectShape = this.canvasWrapper.getLastRectShapeContaining(x, y);
     this.updateRectShapeUnderMouse(rectShape);
 
     for (let i = 0; i < this.resizeHandles.length; i++) {
