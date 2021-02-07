@@ -25,8 +25,7 @@ import { getRandomColor } from '@my/shared';
 import { initDragAndDrop } from './initDragAndDrop';
 import { ImageShape } from './imageShape';
 
-// const backendUrl = 'http://localhost:5000';
-const backendUrl = 'http://localhost:5000';
+const backendUrl = process.env.BACKEND_URL;
 
 const canvas = document.getElementById('canvas');
 if (!(canvas instanceof HTMLCanvasElement))
