@@ -53,7 +53,7 @@ export abstract class CanvasEventHandlerBase implements CanvasEventHandler {
   }
 
   handleScrollEvent(e: WheelEvent): void {
-    this.canvasWrapper.scale(1.0 + e.deltaY * 0.05);
+    this.canvasWrapper.scale(1.0 - e.deltaY * 0.05);
     this.canvasWrapper.invalidate()
   }
 
