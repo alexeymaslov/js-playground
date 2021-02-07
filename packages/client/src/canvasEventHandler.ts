@@ -8,6 +8,8 @@ export interface CanvasEventHandler {
   handleMoveEvent(x: number, y: number): void;
 
   handleUpEvent(): void;
+  
+  handleScrollEvent(e: WheelEvent): void;
 
   draw(context: CanvasRenderingContext2D): void;
 
@@ -48,6 +50,11 @@ export abstract class CanvasEventHandlerBase implements CanvasEventHandler {
 
   handleUpEvent(): void {
     // do nothing
+  }
+
+  handleScrollEvent(e: WheelEvent): void {
+    this.canvasWrapper.scale(1.0 + e.deltaY * 0.05);
+    this.canvasWrapper.invalidate()
   }
 
   draw(context: CanvasRenderingContext2D): void {
