@@ -5,4 +5,4 @@ packages/shared/node_modules
 packages/server/dist
 packages/client/public/scripts
 packages/shared/dist
-webpack.config.ts
+webpack.config.js
