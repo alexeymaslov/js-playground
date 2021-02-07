@@ -27,7 +27,7 @@ export class CanvasWrapper {
   set canvasEventHandler(newHandler: CanvasEventHandler) {
     this._canvasEventHandler = newHandler;
   }
-
+  
   constructor(
     canvas: HTMLCanvasElement,
     eventCanvasPositionGetter: EventCanvasPositionGetter,
@@ -64,6 +64,7 @@ export class CanvasWrapper {
     canvas.addEventListener('mousedown', (ev) => this.handleDownEvent(ev));
     canvas.addEventListener('mousemove', (ev) => this.handleMoveEvent(ev));
     canvas.addEventListener('mouseup', () => this.handleUpEvent());
+    canvas.addEventListener('wheel', (ev) => this.handleScrollEvent(ev));
 
     canvas.addEventListener('keydown', (ev) => this.handleKeyDownEvent(ev));
 
@@ -116,7 +117,31 @@ export class CanvasWrapper {
   }
 
   private clear() {
-    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    const rect = this.getViewRect();
+    this.context.clearRect(rect.x, rect.y, rect.width, rect.height);
+  }
+  
+  private canvasPointToWorld(x: number, y: number): {x: number, y: number} {
+    const transform = this.context.getTransform();
+    return {
+      x: (x - transform.e) / transform.a,
+      y: (y - transform.f) / transform.d,
+    }
+  }
+
+  private getViewCenter(): {x: number, y: number} {
+    return this.canvasPointToWorld(this.canvas.width / 2, this.canvas.height / 2);
+  }
+  
+  private getViewRect(): {x: number, y: number, width: number, height: number} {
+    const topLeft = this.canvasPointToWorld(0.0, 0.0);
+    const rightBottom = this.canvasPointToWorld(this.canvas.width, this.canvas.height);
+    return { 
+      x: topLeft.x,
+      y: topLeft.y,
+      width: rightBottom.x - topLeft.x,
+      height: rightBottom.y - topLeft.y,
+    }
   }
 
   draw(): void {
@@ -134,7 +159,7 @@ export class CanvasWrapper {
     }
 
     if (this.isValid) return;
-
+    
     this.clear();
     this.drawDots();
     this.drawRectShapes();
@@ -142,12 +167,24 @@ export class CanvasWrapper {
     this.isValid = true;
   }
 
-  private drawDots() {
-    const step = 33;
+  scale(factor: number): void {
+    const prevCenter = this.getViewCenter();
+    this.context.scale(factor, factor);
+    const curCenter = this.getViewCenter();
+    
+    const dx = curCenter.x - prevCenter.x
+    const dy = curCenter.y - prevCenter.y
+    this.context.translate(dx, dy);
+  }
+
+  private drawDots(): void {
+    const scale = this.context.getTransform().a;
+    const step = 50;
     for (let x = (step * 3) / 4; x < this.canvas.width; x += step) {
       for (let y = (step * 3) / 4; y < this.canvas.height; y += step) {
+        const pos = this.canvasPointToWorld(x, y);
         this.context.beginPath();
-        this.context.arc(x, y, 1.25, 0, 2 * Math.PI);
+        this.context.arc(pos.x, pos.y, 0.5 / scale, 0, 2 * Math.PI);
         this.context.fillStyle = 'DarkSlateGray';
         this.context.fill();
       }
@@ -156,37 +193,28 @@ export class CanvasWrapper {
 
   private drawRectShapes() {
     for (const rectShape of this.rectShapes) {
-      if (this.isInCanvasBounds(rectShape)) {
-        rectShape.draw(this.context);
-      }
+      rectShape.draw(this.context);
     }
-  }
-
-  private isInCanvasBounds(s: RectShape): boolean {
-    const xMin = s.w < 0 ? s.x + s.w : s.x;
-    const xMax = s.w < 0 ? s.x : s.x + s.w;
-    const yMin = s.h < 0 ? s.y + s.h : s.y;
-    const yMax = s.h < 0 ? s.y : s.y + s.h;
-    return (
-      xMax >= 0 &&
-      xMin <= this.canvas.width &&
-      yMax >= 0 &&
-      yMin <= this.canvas.height
-    );
   }
 
   private handleDownEvent(ev: MouseEvent) {
     const mousePosition = this.eventCanvasPositionGetter.get(ev);
-    this._canvasEventHandler.handleDownEvent(mousePosition.x, mousePosition.y);
+    const worldPosition = this.canvasPointToWorld(mousePosition.x, mousePosition.y);
+    this._canvasEventHandler.handleDownEvent(worldPosition.x, worldPosition.y);
   }
 
   private handleMoveEvent(ev: MouseEvent) {
     const mousePosition = this.eventCanvasPositionGetter.get(ev);
-    this._canvasEventHandler.handleMoveEvent(mousePosition.x, mousePosition.y);
+    const worldPosition = this.canvasPointToWorld(mousePosition.x, mousePosition.y);
+    this._canvasEventHandler.handleMoveEvent(worldPosition.x, worldPosition.y);
   }
 
   private handleUpEvent() {
     this._canvasEventHandler.handleUpEvent();
+  }
+
+  private handleScrollEvent(e: WheelEvent) {
+    this._canvasEventHandler.handleScrollEvent(e);
   }
 
   private handleKeyDownEvent(ev: KeyboardEvent) {
