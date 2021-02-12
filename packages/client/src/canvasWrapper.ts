@@ -27,7 +27,7 @@ export class CanvasWrapper {
   set canvasEventHandler(newHandler: CanvasEventHandler) {
     this._canvasEventHandler = newHandler;
   }
-  
+
   constructor(
     canvas: HTMLCanvasElement,
     eventCanvasPositionGetter: EventCanvasPositionGetter,
@@ -120,28 +120,39 @@ export class CanvasWrapper {
     const rect = this.getViewRect();
     this.context.clearRect(rect.x, rect.y, rect.width, rect.height);
   }
-  
-  private canvasPointToWorld(x: number, y: number): {x: number, y: number} {
+
+  private canvasPointToWorld(x: number, y: number): { x: number; y: number } {
     const transform = this.context.getTransform();
     return {
       x: (x - transform.e) / transform.a,
-      y: (y - transform.f) / transform.d,
-    }
+      y: (y - transform.f) / transform.d
+    };
   }
 
-  private getViewCenter(): {x: number, y: number} {
-    return this.canvasPointToWorld(this.canvas.width / 2, this.canvas.height / 2);
+  private getViewCenter(): { x: number; y: number } {
+    return this.canvasPointToWorld(
+      this.canvas.width / 2,
+      this.canvas.height / 2
+    );
   }
-  
-  private getViewRect(): {x: number, y: number, width: number, height: number} {
+
+  private getViewRect(): {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } {
     const topLeft = this.canvasPointToWorld(0.0, 0.0);
-    const rightBottom = this.canvasPointToWorld(this.canvas.width, this.canvas.height);
-    return { 
+    const rightBottom = this.canvasPointToWorld(
+      this.canvas.width,
+      this.canvas.height
+    );
+    return {
       x: topLeft.x,
       y: topLeft.y,
       width: rightBottom.x - topLeft.x,
-      height: rightBottom.y - topLeft.y,
-    }
+      height: rightBottom.y - topLeft.y
+    };
   }
 
   draw(): void {
@@ -159,7 +170,7 @@ export class CanvasWrapper {
     }
 
     if (this.isValid) return;
-    
+
     this.clear();
     this.drawDots();
     this.drawRectShapes();
@@ -171,9 +182,9 @@ export class CanvasWrapper {
     const prevCenter = this.getViewCenter();
     this.context.scale(factor, factor);
     const curCenter = this.getViewCenter();
-    
-    const dx = curCenter.x - prevCenter.x
-    const dy = curCenter.y - prevCenter.y
+
+    const dx = curCenter.x - prevCenter.x;
+    const dy = curCenter.y - prevCenter.y;
     this.context.translate(dx, dy);
   }
 
@@ -199,13 +210,19 @@ export class CanvasWrapper {
 
   private handleDownEvent(ev: MouseEvent) {
     const mousePosition = this.eventCanvasPositionGetter.get(ev);
-    const worldPosition = this.canvasPointToWorld(mousePosition.x, mousePosition.y);
+    const worldPosition = this.canvasPointToWorld(
+      mousePosition.x,
+      mousePosition.y
+    );
     this._canvasEventHandler.handleDownEvent(worldPosition.x, worldPosition.y);
   }
 
   private handleMoveEvent(ev: MouseEvent) {
     const mousePosition = this.eventCanvasPositionGetter.get(ev);
-    const worldPosition = this.canvasPointToWorld(mousePosition.x, mousePosition.y);
+    const worldPosition = this.canvasPointToWorld(
+      mousePosition.x,
+      mousePosition.y
+    );
     this._canvasEventHandler.handleMoveEvent(worldPosition.x, worldPosition.y);
   }
 
