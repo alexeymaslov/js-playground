@@ -53,7 +53,7 @@ export abstract class RectShape
       context.lineWidth = 1.5;
       context.strokeRect(this.x, this.y, this.w, this.h);
 
-      context.fillStyle = 'DarkSlateGray';// this.selectorColor;
+      context.fillStyle = 'DarkSlateGray'; // this.selectorColor;
       context.font = '20px Arial';
       context.fillText(this._selector, this.x + this.w + 5, this.y + 20);
     }
