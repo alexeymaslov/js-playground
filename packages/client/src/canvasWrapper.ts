@@ -47,6 +47,10 @@ export class CanvasWrapper {
 
     this._canvasEventHandler = new DefaultCanvasEventHandler(this);
 
+    canvas.oncontextmenu = function (e) { // disable context menu on right click
+      e.preventDefault();
+    };
+    
     canvas.addEventListener('dblclick', (ev) => {
       const mousePosition = eventCanvasPositionGetter.get(ev);
       const rectShape = new FilledShape(
@@ -61,10 +65,10 @@ export class CanvasWrapper {
       this.onRectShapeCreated(rectShape, null);
     });
 
-    canvas.addEventListener('mousedown', (ev) => this.handleDownEvent(ev));
-    canvas.addEventListener('mousemove', (ev) => this.handleMoveEvent(ev));
-    canvas.addEventListener('mouseup', () => this.handleUpEvent());
-    canvas.addEventListener('wheel', (ev) => this.handleScrollEvent(ev));
+    canvas.addEventListener('mousedown', (ev) => this._canvasEventHandler.handleDownEvent(ev));
+    canvas.addEventListener('mousemove', (ev) => this._canvasEventHandler.handleMoveEvent(ev));
+    canvas.addEventListener('mouseup', (ev) => this._canvasEventHandler.handleUpEvent(ev));
+    canvas.addEventListener('wheel', (ev) => this._canvasEventHandler.handleScrollEvent(ev));
 
     canvas.addEventListener('keydown', (ev) => this.handleKeyDownEvent(ev));
 
@@ -121,7 +125,7 @@ export class CanvasWrapper {
     this.context.clearRect(rect.x, rect.y, rect.width, rect.height);
   }
 
-  private canvasPointToWorld(x: number, y: number): { x: number; y: number } {
+  canvasPointToWorld(x: number, y: number): { x: number; y: number } {
     const transform = this.context.getTransform();
     return {
       x: (x - transform.e) / transform.a,
@@ -185,7 +189,12 @@ export class CanvasWrapper {
 
     const dx = curCenter.x - prevCenter.x;
     const dy = curCenter.y - prevCenter.y;
+    this.move(dx, dy);
+  }
+  
+  move(dx: number, dy: number): void {
     this.context.translate(dx, dy);
+    this.invalidate()
   }
 
   private drawDots(): void {
@@ -206,32 +215,6 @@ export class CanvasWrapper {
     for (const rectShape of this.rectShapes) {
       rectShape.draw(this.context);
     }
-  }
-
-  private handleDownEvent(ev: MouseEvent) {
-    const mousePosition = this.eventCanvasPositionGetter.get(ev);
-    const worldPosition = this.canvasPointToWorld(
-      mousePosition.x,
-      mousePosition.y
-    );
-    this._canvasEventHandler.handleDownEvent(worldPosition.x, worldPosition.y);
-  }
-
-  private handleMoveEvent(ev: MouseEvent) {
-    const mousePosition = this.eventCanvasPositionGetter.get(ev);
-    const worldPosition = this.canvasPointToWorld(
-      mousePosition.x,
-      mousePosition.y
-    );
-    this._canvasEventHandler.handleMoveEvent(worldPosition.x, worldPosition.y);
-  }
-
-  private handleUpEvent() {
-    this._canvasEventHandler.handleUpEvent();
-  }
-
-  private handleScrollEvent(e: WheelEvent) {
-    this._canvasEventHandler.handleScrollEvent(e);
   }
 
   private handleKeyDownEvent(ev: KeyboardEvent) {

@@ -3,11 +3,11 @@ import { RectShape } from './rectShape';
 import { FilledShape } from './filledShape';
 
 export interface CanvasEventHandler {
-  handleDownEvent(x: number, y: number): void;
+  handleDownEvent(ev: MouseEvent): void;
 
-  handleMoveEvent(x: number, y: number): void;
+  handleMoveEvent(ev: MouseEvent): void;
 
-  handleUpEvent(): void;
+  handleUpEvent(ev: MouseEvent): void;
 
   handleScrollEvent(e: WheelEvent): void;
 
@@ -24,13 +24,19 @@ export abstract class CanvasEventHandlerBase implements CanvasEventHandler {
     this.canvasWrapper = canvasWrapper;
   }
 
+  getWorldPos(ev: MouseEvent | WheelEvent): { x: number, y:number } {
+    const canvasPos = this.canvasWrapper.eventCanvasPositionGetter.get(ev);
+    return this.canvasWrapper.canvasPointToWorld(canvasPos.x, canvasPos.y);
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  handleDownEvent(x: number, y: number): void {
+  handleDownEvent(ev: MouseEvent): void {
     // do nothing
   }
 
-  handleMoveEvent(x: number, y: number): void {
-    const rectShape = this.canvasWrapper.getLastRectShapeContaining(x, y);
+  handleMoveEvent(ev: MouseEvent): void {
+    var worldPos = this.getWorldPos(ev);
+    const rectShape = this.canvasWrapper.getLastRectShapeContaining(worldPos.x, worldPos.y);
     this.updateRectShapeUnderMouse(rectShape);
   }
 
@@ -48,7 +54,7 @@ export abstract class CanvasEventHandlerBase implements CanvasEventHandler {
     }
   }
 
-  handleUpEvent(): void {
+  handleUpEvent(ev: MouseEvent): void {
     // do nothing
   }
 
@@ -75,14 +81,20 @@ export class DefaultCanvasEventHandler extends CanvasEventHandlerBase {
     this.canvasWrapper.onRectShapeSelected(null);
   }
 
-  handleDownEvent(x: number, y: number): void {
-    const rectShape = this.canvasWrapper.getLastRectShapeContaining(x, y);
+  handleDownEvent(ev: MouseEvent): void {
+    var worldPos = this.getWorldPos(ev);
+    if (ev.button == 2) { // right button
+      this.canvasWrapper.canvasEventHandler = new DragWorldCanvasEventHandler(this.canvasWrapper, worldPos.x, worldPos.y);
+      return;
+    }
+
+    const rectShape = this.canvasWrapper.getLastRectShapeContaining(worldPos.x, worldPos.y);
     if (rectShape !== null) {
       this.canvasWrapper.canvasEventHandler = new DragCanvasEventHandler(
         this.canvasWrapper,
         rectShape,
-        x,
-        y
+        worldPos.x,
+        worldPos.y
       );
     }
   }
@@ -117,7 +129,12 @@ export class SelectedCanvasEventHandler extends CanvasEventHandlerBase {
     this.canvasWrapper.onRectShapeSelected(this.selectedRectShape);
   }
 
-  handleDownEvent(x: number, y: number): void {
+  handleDownEvent(ev: MouseEvent): void {
+    var worldPos = this.getWorldPos(ev);
+    if (ev.button == 2) { // right button
+      this.canvasWrapper.canvasEventHandler = new DragWorldCanvasEventHandler(this.canvasWrapper, worldPos.x, worldPos.y);
+      return;
+    }
     if (this.selectedResizeHandleIndex !== null) {
       this.canvasWrapper.canvasEventHandler = new ResizeCanvasEventHandler(
         this.canvasWrapper,
@@ -125,13 +142,13 @@ export class SelectedCanvasEventHandler extends CanvasEventHandlerBase {
         this.selectedResizeHandleIndex
       );
     } else {
-      const rectShape = this.canvasWrapper.getLastRectShapeContaining(x, y);
+      const rectShape = this.canvasWrapper.getLastRectShapeContaining(worldPos.x, worldPos.y);
       if (rectShape !== null) {
         this.canvasWrapper.canvasEventHandler = new DragCanvasEventHandler(
           this.canvasWrapper,
           rectShape,
-          x,
-          y
+          worldPos.x,
+          worldPos.y
         );
       } else {
         this.canvasWrapper.invalidate();
@@ -142,13 +159,14 @@ export class SelectedCanvasEventHandler extends CanvasEventHandlerBase {
     }
   }
 
-  handleMoveEvent(x: number, y: number): void {
-    const rectShape = this.canvasWrapper.getLastRectShapeContaining(x, y);
+  handleMoveEvent(ev: MouseEvent): void {
+    var worldPos = this.getWorldPos(ev);
+    const rectShape = this.canvasWrapper.getLastRectShapeContaining(worldPos.x, worldPos.y);
     this.updateRectShapeUnderMouse(rectShape);
 
     for (let i = 0; i < this.resizeHandles.length; i++) {
       const resizeHandle = this.resizeHandles[i];
-      if (resizeHandle.contains(x, y)) {
+      if (resizeHandle.contains(worldPos.x, worldPos.y)) {
         this.selectedResizeHandleIndex = i;
         this.updateCanvasCursorStyle(i);
         return;
@@ -257,14 +275,15 @@ export class DragCanvasEventHandler extends SelectedCanvasEventHandler {
     this.dragOffsetY = y - selectedRectShape.y;
   }
 
-  handleMoveEvent(x: number, y: number): void {
-    this.selectedRectShape.x = x - this.dragOffsetX;
-    this.selectedRectShape.y = y - this.dragOffsetY;
+  handleMoveEvent(ev: MouseEvent): void {
+    var worldPos = this.getWorldPos(ev);
+    this.selectedRectShape.x = worldPos.x - this.dragOffsetX;
+    this.selectedRectShape.y = worldPos.y - this.dragOffsetY;
     this.updateResizeHandlesPosition();
     this.canvasWrapper.invalidate();
   }
 
-  handleUpEvent(): void {
+  handleUpEvent(ev: MouseEvent): void {
     this.canvasWrapper.onRectShapeUpdated?.(this.selectedRectShape);
     this.canvasWrapper.canvasEventHandler = new SelectedCanvasEventHandler(
       this.canvasWrapper,
@@ -285,13 +304,14 @@ export class ResizeCanvasEventHandler extends SelectedCanvasEventHandler {
     this.resizeHandleIndex = selectedResizeHandleIndex;
   }
 
-  handleMoveEvent(x: number, y: number): void {
-    this.updateSelectedRectShape(x, y);
+  handleMoveEvent(ev: MouseEvent): void {
+    var worldPos = this.getWorldPos(ev);
+    this.updateSelectedRectShape(worldPos.x, worldPos.y);
     this.updateResizeHandlesPosition();
     this.canvasWrapper.invalidate();
   }
 
-  handleUpEvent(): void {
+  handleUpEvent(ev: MouseEvent): void {
     this.canvasWrapper.onRectShapeUpdated(this.selectedRectShape);
     this.canvasWrapper.updateCursorStyle('auto');
     this.canvasWrapper.canvasEventHandler = new SelectedCanvasEventHandler(
@@ -339,5 +359,33 @@ export class ResizeCanvasEventHandler extends SelectedCanvasEventHandler {
         this.selectedRectShape.h = y - oldy;
         break;
     }
+  }
+}
+
+export class DragWorldCanvasEventHandler extends CanvasEventHandlerBase {
+  private dragPointX: number;
+  private dragPointY: number;
+
+  constructor(
+    canvasWrapper: CanvasWrapper,
+    x: number,
+    y: number
+  ) {
+    super(canvasWrapper);
+    this.dragPointX = x;
+    this.dragPointY = y;
+    this.canvasWrapper.updateCursorStyle('grab');
+  }
+
+  handleMoveEvent(ev: MouseEvent): void {
+    const worldPos = this.getWorldPos(ev);
+    this.canvasWrapper.move(-this.dragPointX + worldPos.x, -this.dragPointY + worldPos.y);
+  }
+
+  handleUpEvent(ev: MouseEvent): void {
+    this.canvasWrapper.updateCursorStyle('auto');
+    this.canvasWrapper.canvasEventHandler = new DefaultCanvasEventHandler(
+      this.canvasWrapper,
+    );
   }
 }
