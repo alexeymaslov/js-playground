@@ -2,7 +2,6 @@
   "watch": ["packages/shared/src", "packages/server/src"],
   "ext": ".ts,.js",
   "ignore": [],
-  "exec": "ts-node-script packages/server/src/main.ts",
-  "exec2": "cd packages/server && npm run build && cd ../..  && node packages/server/dist/main.js"
+  "exec": "cd packages/server && npm run build && cd ../.. && node packages/server/dist/main.js"
 }
 
