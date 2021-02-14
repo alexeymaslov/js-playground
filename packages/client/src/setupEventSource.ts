@@ -17,6 +17,7 @@ export function setupEventSource(
   canvasWrapper: CanvasWrapper,
   username: string
 ): void {
+  //asdasd
   const url =
     lastEventId !== null
       ? `${backendUrl}/events?lastEventId=${lastEventId}`
