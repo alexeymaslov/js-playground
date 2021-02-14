@@ -3,7 +3,8 @@
     "packages/*"
   ],
   "scripts": {
-    "deploy to heroku": "git push heroku master",
+    "deploy branch to heroku": "git push heroku 5-SSE_being_blocked_by_Heroku:master",
+    "deploy master to heroku": "git push heroku master",
     "build": "cd packages/client && npm run build && cd ../server && npm run build",
     "nodemon:client": "nodemon --config nodemon.client.json",
     "nodemon:server": "nodemon --inspect --config nodemon.server.json"
