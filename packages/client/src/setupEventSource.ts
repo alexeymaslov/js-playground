@@ -26,10 +26,6 @@ export function setupEventSource(
 
   const eventSource = new EventSource(url);
 
-  eventSource.addEventListener('status', (e) => {
-    console.log(e);
-  });
-
   eventSource.onopen = () => {
     console.log('Opened connection to /events.');
   };
@@ -48,6 +44,7 @@ export function setupEventSource(
   };
 
   const beforeUnloadHandler = () => {
+    // close sse connection on page reload
     console.log('Closing connection to /events on "beforeunload" event.');
     eventSource.close();
   };
