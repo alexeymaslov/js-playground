@@ -35,7 +35,7 @@ export abstract class CanvasEventHandlerBase implements CanvasEventHandler {
   }
 
   handleMoveEvent(ev: MouseEvent): void {
-    var worldPos = this.getWorldPos(ev);
+    const worldPos = this.getWorldPos(ev);
     const rectShape = this.canvasWrapper.getLastRectShapeContaining(worldPos.x, worldPos.y);
     this.updateRectShapeUnderMouse(rectShape);
   }
@@ -82,7 +82,7 @@ export class DefaultCanvasEventHandler extends CanvasEventHandlerBase {
   }
 
   handleDownEvent(ev: MouseEvent): void {
-    var worldPos = this.getWorldPos(ev);
+    const worldPos = this.getWorldPos(ev);
     if (ev.button == 2) { // right button
       this.canvasWrapper.canvasEventHandler = new DragWorldCanvasEventHandler(this.canvasWrapper, worldPos.x, worldPos.y);
       return;
@@ -130,7 +130,7 @@ export class SelectedCanvasEventHandler extends CanvasEventHandlerBase {
   }
 
   handleDownEvent(ev: MouseEvent): void {
-    var worldPos = this.getWorldPos(ev);
+    const worldPos = this.getWorldPos(ev);
     if (ev.button == 2) { // right button
       this.canvasWrapper.canvasEventHandler = new DragWorldCanvasEventHandler(this.canvasWrapper, worldPos.x, worldPos.y);
       return;
@@ -160,7 +160,7 @@ export class SelectedCanvasEventHandler extends CanvasEventHandlerBase {
   }
 
   handleMoveEvent(ev: MouseEvent): void {
-    var worldPos = this.getWorldPos(ev);
+    const worldPos = this.getWorldPos(ev);
     const rectShape = this.canvasWrapper.getLastRectShapeContaining(worldPos.x, worldPos.y);
     this.updateRectShapeUnderMouse(rectShape);
 
@@ -276,7 +276,7 @@ export class DragCanvasEventHandler extends SelectedCanvasEventHandler {
   }
 
   handleMoveEvent(ev: MouseEvent): void {
-    var worldPos = this.getWorldPos(ev);
+    const worldPos = this.getWorldPos(ev);
     this.selectedRectShape.x = worldPos.x - this.dragOffsetX;
     this.selectedRectShape.y = worldPos.y - this.dragOffsetY;
     this.updateResizeHandlesPosition();
@@ -305,7 +305,7 @@ export class ResizeCanvasEventHandler extends SelectedCanvasEventHandler {
   }
 
   handleMoveEvent(ev: MouseEvent): void {
-    var worldPos = this.getWorldPos(ev);
+    const worldPos = this.getWorldPos(ev);
     this.updateSelectedRectShape(worldPos.x, worldPos.y);
     this.updateResizeHandlesPosition();
     this.canvasWrapper.invalidate();
