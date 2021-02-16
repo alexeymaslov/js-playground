@@ -3,10 +3,11 @@
     "packages/*"
   ],
   "scripts": {
-    "deploy to heroku": "git push heroku master",
+    "deploy current branch to heroku": "git push heroku HEAD:master",
+    "deploy master to heroku": "git push heroku master",
     "build": "cd packages/client && npm run build && cd ../server && npm run build",
     "nodemon:client": "nodemon --config nodemon.client.json",
-    "nodemon:server": "nodemon --config nodemon.server.json"
+    "nodemon:server": "nodemon --inspect --config nodemon.server.json"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^4.13.0",

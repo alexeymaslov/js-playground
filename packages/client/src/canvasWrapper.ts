@@ -6,8 +6,7 @@ import {
   DefaultCanvasEventHandler
 } from './canvasEventHandler';
 import { color } from './index';
-import { error, uuidv4 } from '@my/shared';
-import { Uuid } from '@my/shared';
+import { error, Uuid, uuidv4 } from '@my/shared';
 
 export class CanvasWrapper {
   private readonly canvas: HTMLCanvasElement;

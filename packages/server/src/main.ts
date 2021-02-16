@@ -16,13 +16,29 @@ process.on('uncaughtException', function (err) {
   console.log(err);
 });
 
+class ServerSentEvent {
+  readonly data: string;
+  readonly id: string;
+  readonly event: string;
+
+  constructor(data: string, id: string, event: string) {
+    this.data = data;
+    this.id = id;
+    this.event = event;
+  }
+
+  toString() {
+    return `data: ${this.data}\nid: ${this.id}\nevent: ${this.event}\n\n`;
+  }
+}
+
 const port = parseInt(process.env['PORT'] || '5000');
 const app = express();
 const emitter = new EventEmitter();
 let idCounter = 0;
 let eventIdCounter = 0;
 const state: (ShapeData & HasId & MaybeHasSelector)[] = [];
-const events: string[] = [];
+const events: ServerSentEvent[] = [];
 
 app.use(bodyParser.json({ limit: '1mb', type: 'application/json' }));
 
@@ -39,9 +55,36 @@ app.get('/events', async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.flushHeaders();
 
-  if (events.length > 0) {
-    const history = events.join('');
-    res.write(history);
+  const query = req.query as { lastEventId?: string };
+  let snapshot;
+  if (query.lastEventId !== undefined) {
+    if (events.length > 0) {
+      const i = events.findIndex((x) => x.id === query.lastEventId);
+      if (i !== -1) {
+        console.log(
+          `Requested events with lastEventId=${query.lastEventId} which is ${i}-th event.`
+        );
+        snapshot = events.slice(i + 1);
+      } else {
+        console.log(
+          `Requested events with lastEventId=${query.lastEventId} but events list does not contain such id.`
+        );
+        // not sure how to correctly handle this case. just send all events to client
+        snapshot = events;
+      }
+    } else {
+      console.log(
+        `Requested events with lastEventId=${query.lastEventId} but events list is empty.`
+      );
+      // not sure how to correctly handle this case. just send all events to client
+      snapshot = events;
+    }
+  } else {
+    snapshot = events;
+  }
+
+  if (snapshot.length > 0) {
+    res.write(snapshot.map((x) => x.toString()).join(''));
   }
 
   const eventHandler = (body: string) => {
@@ -54,7 +97,7 @@ app.get('/events', async (req, res) => {
     console.log('client dropped me');
     emitter.removeListener('event', eventHandler);
     // todo emit event to deselect shapes selected by the consumer of the stream
-    // res.end();
+    res.end();
   });
 });
 
@@ -67,10 +110,14 @@ app.post('/resize', (req, res) => {
     found.y = resizeRequestBody.y;
     found.w = resizeRequestBody.w;
     found.h = resizeRequestBody.w;
-    const body = `data: ${JSON.stringify(
-      resizeRequestBody
-    )}\nid: ${eventIdCounter++}\nevent: resize\n\n`;
-    events.push(body);
+    const sse = new ServerSentEvent(
+      JSON.stringify(resizeRequestBody),
+      eventIdCounter.toString(),
+      'resize'
+    );
+    eventIdCounter++;
+    events.push(sse);
+    const body = sse.toString();
     emitter.emit('event', body);
   } else {
     console.warn(`Cannot find shape with id=${resizeRequestBody.id} in state.`);
@@ -84,10 +131,14 @@ app.post('/add', (req, res) => {
   res.status(200).json(hasId);
   const addEventData: AddEventData = { ...addRequestBody, ...hasId };
   state.push({ ...addEventData, selector: null });
-  const body = `data: ${JSON.stringify(
-    addEventData
-  )}\nid: ${eventIdCounter++}\nevent: add\n\n`;
-  events.push(body);
+  const sse = new ServerSentEvent(
+    JSON.stringify(addEventData),
+    eventIdCounter.toString(),
+    'add'
+  );
+  eventIdCounter++;
+  events.push(sse);
+  const body = sse.toString();
   emitter.emit('event', body);
 });
 
@@ -97,10 +148,14 @@ app.post('/remove', (req, res) => {
   if (i !== -1) {
     res.sendStatus(200);
     state.splice(i, 1);
-    const body = `data: ${JSON.stringify(
-      hasId
-    )}\nid: ${eventIdCounter++}\nevent: remove\n\n`;
-    events.push(body);
+    const sse = new ServerSentEvent(
+      JSON.stringify(hasId),
+      eventIdCounter.toString(),
+      'remove'
+    );
+    eventIdCounter++;
+    events.push(sse);
+    const body = sse.toString();
     emitter.emit('event', body);
   } else {
     console.warn(`Cannot find shape with id=${hasId.id} in state.`);
@@ -126,15 +181,15 @@ app.post('/select', (req, res) => {
     found.selector = requestBody.selector;
   }
 
-  const data = `data: ${JSON.stringify(
-    requestBody
-  )}\nid: ${eventIdCounter++}\nevent: select\n\n`;
-  events.push(data);
+  const sse = new ServerSentEvent(
+    JSON.stringify(requestBody),
+    eventIdCounter.toString(),
+    'select'
+  );
+  eventIdCounter++;
+  events.push(sse);
+  const data = sse.toString();
   emitter.emit('event', data);
-});
-
-app.get('/snapshot', (req, res) => {
-  res.status(200).json(state);
 });
 
 app.listen(port, () => {

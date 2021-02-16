@@ -6,7 +6,8 @@
     "composite": true,
     "esModuleInterop": true,
     "tsBuildInfoFile": "buildcache/tsconfig.tsbuildinfo",
-    "skipDefaultLibCheck": true
+    "skipDefaultLibCheck": true,
+    "sourceMap": true
   },
   "include": ["src"],
   "references": [{"path": "../shared"}]
