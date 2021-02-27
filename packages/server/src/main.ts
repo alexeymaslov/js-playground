@@ -14,10 +14,16 @@ import bodyParser from 'body-parser';
 import { ServerSentEvent } from './serverSentEvent';
 import { State } from './state';
 import Timeout = NodeJS.Timeout;
+import { getAddEvents, saveAddEvents } from './db';
 
 // todo looks like it is a bad practise to catch it like that
 process.on('uncaughtException', function (err) {
   console.log(err);
+});
+
+process.on('SIGTERM', () => {
+  console.log('[Main] SIGTERM. Saving state to db');
+  saveAddEvents(state.addEvents);
 });
 
 const port = parseInt(process.env['PORT'] || '5000');
@@ -188,6 +194,20 @@ function select(selectRequestBody: SelectRequestBody) {
   emitter.emit('event', sse.toString());
 }
 
-app.listen(port, () => {
-  return console.log(`server is listening on port ${port}`);
+app.get('/save', (_req, res) => {
+  saveAddEvents(state.addEvents)
+    .then(() => res.sendStatus(200))
+    .catch((err) => {
+      console.error('[Main] Failed to save events to db', err);
+      res.sendStatus(500);
+    });
 });
+
+getAddEvents()
+  .then((events) => (state.addEvents = events))
+  .catch((err) => console.error('[Main] Failed to get events from db', err))
+  .finally(() => {
+    app.listen(port, () => {
+      return console.log(`[Main] Server is listening on port=${port}`);
+    });
+  });
