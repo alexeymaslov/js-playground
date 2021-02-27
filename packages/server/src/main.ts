@@ -13,6 +13,7 @@ import {
 import bodyParser from 'body-parser';
 import { ServerSentEvent } from './serverSentEvent';
 import { State } from './state';
+import Timeout = NodeJS.Timeout;
 
 // todo looks like it is a bad practise to catch it like that
 process.on('uncaughtException', function (err) {
@@ -84,7 +85,13 @@ app.get('/events', async (req, res) => {
     res.write(snapshot.map((x) => x.toString()).join(''));
   }
 
+  // send heartbeat message every 30 sec to keep sse connection alive
+  const heartbeatTimeout: Timeout = setInterval(() => {
+    res.write(`event:heartbeat\nid:${uuidv4()}\ndata:\n\n`);
+  }, 30000);
+
   const eventHandler = (body: string) => {
+    heartbeatTimeout.refresh();
     res.write(body);
   };
 
@@ -94,6 +101,7 @@ app.get('/events', async (req, res) => {
     console.log(`Client with username=${username} dropped me.`);
     select({ username: username, uuid: null });
     emitter.removeListener('event', eventHandler);
+    clearInterval(heartbeatTimeout);
     res.end();
   });
 });

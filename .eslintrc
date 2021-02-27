@@ -14,7 +14,7 @@
   "rules": {
     "prettier/prettier": 2,
     "@typescript-eslint/no-unused-vars": [
-      "error",
+      "warn",
       {
         "argsIgnorePattern": "^_",
         "caughtErrors": "all"

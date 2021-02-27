@@ -151,4 +151,8 @@ export function setupEventSource(
       }
     }
   });
+
+  eventSource.addEventListener('heartbeat', (_evt) => {
+    console.debug('[EventSource] heartbeat');
+  });
 }
