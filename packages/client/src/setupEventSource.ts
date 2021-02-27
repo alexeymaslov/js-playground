@@ -17,25 +17,25 @@ export function setupEventSource(
   shouldClearCanvasOnOpen?: boolean
 ): void {
   const url = `${backendUrl}/events?username=${username}`;
-  console.info(`[EventSource] Opening connection to ${url}`);
+  console.log(`[EventSource] Opening connection to ${url}`);
   const eventSource = new EventSource(url);
 
   eventSource.onopen = () => {
     if (shouldClearCanvasOnOpen !== undefined && shouldClearCanvasOnOpen) {
-      console.info(
+      console.log(
         '[EventSource] Opened a new connection to /events after error. Clearing canvas'
       );
       canvasWrapper.clear();
       shouldClearCanvasOnOpen = false;
     } else {
-      console.info('[EventSource] Opened connection to /events.');
+      console.log('[EventSource] Opened connection to /events.');
     }
   };
 
   eventSource.onerror = () => {
     if (eventSource.readyState === EventSource.CONNECTING) {
       // should reconnect automatically
-      console.info(
+      console.log(
         '[EventSource] Connection to /events has errored. Reconnecting automatically...'
       );
     } else if (eventSource.readyState === EventSource.CLOSED) {
@@ -55,7 +55,7 @@ export function setupEventSource(
 
   const beforeUnloadHandler = () => {
     // close sse connection on page reload
-    console.info(
+    console.log(
       '[EventSource] Closing connection to /events on "beforeunload" event.'
     );
     eventSource.close();
@@ -66,7 +66,7 @@ export function setupEventSource(
   eventSource.addEventListener('add', (evt) => {
     if (evt instanceof MessageEvent) {
       const addEventData = JSON.parse(evt.data) as AddEventData;
-      console.info('[EventSource] add:', addEventData);
+      console.log('[EventSource] add:', addEventData);
       const localShape = canvasWrapper.getRectShapeByUuid(addEventData.uuid);
       if (localShape === null) {
         const localShapeWithUuid = canvasWrapper.getRectShapeByUuid(
@@ -107,7 +107,7 @@ export function setupEventSource(
   eventSource.addEventListener('resize', (evt) => {
     if (evt instanceof MessageEvent) {
       const shape = JSON.parse(evt.data) as ResizeEventData;
-      console.info('[EventSource] resize:', shape);
+      console.log('[EventSource] resize:', shape);
       const localShape = canvasWrapper.getRectShapeByUuid(shape.uuid);
       if (localShape != null) {
         localShape.x = shape.x;
@@ -122,7 +122,7 @@ export function setupEventSource(
   eventSource.addEventListener('remove', (evt) => {
     if (evt instanceof MessageEvent) {
       const hasId = JSON.parse(evt.data) as RemoveEventData;
-      console.info('[EventSource] remove:', hasId);
+      console.log('[EventSource] remove:', hasId);
       const localShape = canvasWrapper.getRectShapeByUuid(hasId.uuid);
       if (localShape != null) {
         canvasWrapper.removeRectShape(localShape);
@@ -133,7 +133,7 @@ export function setupEventSource(
   eventSource.addEventListener('select', (evt) => {
     if (evt instanceof MessageEvent) {
       const data = JSON.parse(evt.data) as SelectEventData;
-      console.info('[EventSource] select:', data);
+      console.log('[EventSource] select:', data);
 
       for (const rectShape of canvasWrapper.rectShapes) {
         if (rectShape.selector === data.username) {

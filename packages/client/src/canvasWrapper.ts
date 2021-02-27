@@ -102,7 +102,7 @@ export class CanvasWrapper {
   }
 
   addRectShape(rectShape: RectShape): void {
-    console.info(`[CanvasWrapper] adding rectShape; uuid=${rectShape.uuid}`);
+    console.log(`[CanvasWrapper] adding rectShape; uuid=${rectShape.uuid}`);
     this.rectShapes.push(rectShape);
     this.isValid = false;
   }
