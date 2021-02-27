@@ -10,53 +10,64 @@ import {
 } from '@my/shared';
 import { CanvasWrapper } from './canvasWrapper';
 
-let lastEventId: string | null = null;
-
 export function setupEventSource(
   backendUrl: string,
   canvasWrapper: CanvasWrapper,
-  username: string
+  username: string,
+  shouldClearCanvasOnOpen?: boolean
 ): void {
-  const url =
-    lastEventId !== null
-      ? `${backendUrl}/events?lastEventId=${lastEventId}`
-      : `${backendUrl}/events`;
-
-  console.log(`Opening connection to ${url}`);
-
+  const url = `${backendUrl}/events?username=${username}`;
+  console.info(`[EventSource] Opening connection to ${url}`);
   const eventSource = new EventSource(url);
 
   eventSource.onopen = () => {
-    console.log('Opened connection to /events.');
+    if (shouldClearCanvasOnOpen !== undefined && shouldClearCanvasOnOpen) {
+      console.info(
+        '[EventSource] Opened a new connection to /events after error. Clearing canvas'
+      );
+      canvasWrapper.clear();
+      shouldClearCanvasOnOpen = false;
+    } else {
+      console.info('[EventSource] Opened connection to /events.');
+    }
   };
 
   eventSource.onerror = () => {
-    window.removeEventListener('beforeunload', beforeUnloadHandler);
-    eventSource.close();
+    if (eventSource.readyState === EventSource.CONNECTING) {
+      // should reconnect automatically
+      console.info(
+        '[EventSource] Connection to /events has errored. Reconnecting automatically...'
+      );
+    } else if (eventSource.readyState === EventSource.CLOSED) {
+      // have to setup new eventSource and reinit canvas when connected
+      window.removeEventListener('beforeunload', beforeUnloadHandler);
+      eventSource.close();
 
-    console.log(
-      '⛔ Connection to /events has errored. Reconnecting in 10 seconds...'
-    );
-    setTimeout(
-      () => setupEventSource(backendUrl, canvasWrapper, username),
-      10000
-    );
+      console.warn(
+        '[EventSource] Connection to /events has errored. Setting up new EventSource in 10 seconds...'
+      );
+      setTimeout(
+        () => setupEventSource(backendUrl, canvasWrapper, username, true),
+        10000
+      );
+    }
   };
 
   const beforeUnloadHandler = () => {
     // close sse connection on page reload
-    console.log('Closing connection to /events on "beforeunload" event.');
+    console.info(
+      '[EventSource] Closing connection to /events on "beforeunload" event.'
+    );
     eventSource.close();
   };
 
   window.addEventListener('beforeunload', beforeUnloadHandler);
 
   eventSource.addEventListener('add', (evt) => {
-    console.log(evt);
     if (evt instanceof MessageEvent) {
-      lastEventId = evt.lastEventId;
       const addEventData = JSON.parse(evt.data) as AddEventData;
-      const localShape = canvasWrapper.getRectShapeById(addEventData.id);
+      console.info('[EventSource] add:', addEventData);
+      const localShape = canvasWrapper.getRectShapeByUuid(addEventData.uuid);
       if (localShape === null) {
         const localShapeWithUuid = canvasWrapper.getRectShapeByUuid(
           addEventData.uuid
@@ -72,7 +83,6 @@ export function setupEventSource(
               addEventData.uuid,
               image
             );
-            imageShape.id = addEventData.id;
             canvasWrapper.addRectShape(imageShape);
             image.onload = () => {
               canvasWrapper.invalidate();
@@ -87,7 +97,6 @@ export function setupEventSource(
               addEventData.uuid,
               addEventData.color
             );
-            filledShape.id = addEventData.id;
             canvasWrapper.addRectShape(filledShape);
           }
         }
@@ -96,11 +105,10 @@ export function setupEventSource(
   });
 
   eventSource.addEventListener('resize', (evt) => {
-    console.log(evt);
     if (evt instanceof MessageEvent) {
-      lastEventId = evt.lastEventId;
       const shape = JSON.parse(evt.data) as ResizeEventData;
-      const localShape = canvasWrapper.getRectShapeById(shape.id);
+      console.info('[EventSource] resize:', shape);
+      const localShape = canvasWrapper.getRectShapeByUuid(shape.uuid);
       if (localShape != null) {
         localShape.x = shape.x;
         localShape.y = shape.y;
@@ -112,11 +120,10 @@ export function setupEventSource(
   });
 
   eventSource.addEventListener('remove', (evt) => {
-    console.log(evt);
     if (evt instanceof MessageEvent) {
-      lastEventId = evt.lastEventId;
       const hasId = JSON.parse(evt.data) as RemoveEventData;
-      const localShape = canvasWrapper.getRectShapeById(hasId.id);
+      console.info('[EventSource] remove:', hasId);
+      const localShape = canvasWrapper.getRectShapeByUuid(hasId.uuid);
       if (localShape != null) {
         canvasWrapper.removeRectShape(localShape);
       }
@@ -124,26 +131,21 @@ export function setupEventSource(
   });
 
   eventSource.addEventListener('select', (evt) => {
-    console.log(evt);
     if (evt instanceof MessageEvent) {
-      lastEventId = evt.lastEventId;
       const data = JSON.parse(evt.data) as SelectEventData;
+      console.info('[EventSource] select:', data);
 
-      if (data.selector !== null && data.selector === username) return;
-
-      if (data.selector !== null) {
-        for (const rectShape of canvasWrapper.rectShapes) {
-          if (rectShape.selector === data.selector) {
-            rectShape.selector = null;
-            canvasWrapper.invalidate();
-          }
+      for (const rectShape of canvasWrapper.rectShapes) {
+        if (rectShape.selector === data.username) {
+          rectShape.selector = null;
+          canvasWrapper.invalidate();
         }
       }
 
-      if (data.id !== null) {
-        const localShape = canvasWrapper.getRectShapeById(data.id);
+      if (data.uuid !== null) {
+        const localShape = canvasWrapper.getRectShapeByUuid(data.uuid);
         if (localShape != null) {
-          localShape.selector = data.selector;
+          localShape.selector = data.username;
           canvasWrapper.invalidate();
         }
       }

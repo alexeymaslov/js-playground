@@ -3,41 +3,30 @@ import EventEmitter from 'events';
 import {
   AddEventData,
   AddRequestBody,
-  HasId,
-  MaybeHasSelector,
+  RemoveEventData,
+  RemoveRequestBody,
+  ResizeEventData,
   ResizeRequestBody,
   SelectRequestBody,
-  ShapeData
+  uuidv4
 } from '@my/shared';
 import bodyParser from 'body-parser';
+import { ServerSentEvent } from './serverSentEvent';
+import { State } from './state';
 
 // todo looks like it is a bad practise to catch it like that
 process.on('uncaughtException', function (err) {
   console.log(err);
 });
 
-class ServerSentEvent {
-  readonly data: string;
-  readonly id: string;
-  readonly event: string;
-
-  constructor(data: string, id: string, event: string) {
-    this.data = data;
-    this.id = id;
-    this.event = event;
-  }
-
-  toString() {
-    return `data: ${this.data}\nid: ${this.id}\nevent: ${this.event}\n\n`;
-  }
-}
-
 const port = parseInt(process.env['PORT'] || '5000');
 const app = express();
 const emitter = new EventEmitter();
-let idCounter = 0;
-let eventIdCounter = 0;
-const state: (ShapeData & HasId & MaybeHasSelector)[] = [];
+
+const state: State = {
+  addEvents: [],
+  selectEvents: []
+};
 const events: ServerSentEvent[] = [];
 
 app.use(bodyParser.json({ limit: '1mb', type: 'application/json' }));
@@ -47,41 +36,49 @@ app.use(bodyParser.json({ limit: '1mb', type: 'application/json' }));
 app.use(express.static('packages/client/dist'));
 
 app.get('/events', async (req, res) => {
-  console.log('Call to events.');
-  res.statusCode = 200;
+  const lastEventId = req.header('Last-Event-Id');
+  const query = req.query as { username: string };
+  const username = query.username;
+
+  console.log(
+    `Call to /events; username=${username}; Last-Event-Id=${lastEventId}`
+  );
+
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Connection', 'keep-alive');
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.flushHeaders();
+  res.statusCode = 200;
 
-  const query = req.query as { lastEventId?: string };
-  let snapshot;
-  if (query.lastEventId !== undefined) {
-    if (events.length > 0) {
-      const i = events.findIndex((x) => x.id === query.lastEventId);
-      if (i !== -1) {
-        console.log(
-          `Requested events with lastEventId=${query.lastEventId} which is ${i}-th event.`
-        );
-        snapshot = events.slice(i + 1);
-      } else {
-        console.log(
-          `Requested events with lastEventId=${query.lastEventId} but events list does not contain such id.`
-        );
-        // not sure how to correctly handle this case. just send all events to client
-        snapshot = events;
-      }
+  let snapshot: ServerSentEvent[] = [];
+  if (lastEventId !== undefined && lastEventId !== '') {
+    console.log(`user=${username} is reconnecting`);
+    const i = events.findIndex((e) => e.id === lastEventId);
+    if (i != -1) {
+      snapshot = events.splice(i + 1);
     } else {
       console.log(
-        `Requested events with lastEventId=${query.lastEventId} but events list is empty.`
+        `user=${username} should close connection and open it again. returning 204 code`
       );
-      // not sure how to correctly handle this case. just send all events to client
-      snapshot = events;
+      res.sendStatus(204);
+      return;
     }
   } else {
-    snapshot = events;
+    console.log(`user=${username} is first time connecting`);
+    for (const addEvent of state.addEvents) {
+      snapshot.push(
+        new ServerSentEvent(JSON.stringify(addEvent), uuidv4(), 'add')
+      );
+    }
+
+    for (const selectEvent of state.selectEvents) {
+      snapshot.push(
+        new ServerSentEvent(JSON.stringify(selectEvent), uuidv4(), 'select')
+      );
+    }
   }
+
+  res.flushHeaders();
 
   if (snapshot.length > 0) {
     res.write(snapshot.map((x) => x.toString()).join(''));
@@ -94,103 +91,94 @@ app.get('/events', async (req, res) => {
   emitter.on('event', eventHandler);
 
   res.on('close', () => {
-    console.log('client dropped me');
+    console.log(`Client with username=${username} dropped me.`);
+    select({ username: username, uuid: null });
     emitter.removeListener('event', eventHandler);
-    // todo emit event to deselect shapes selected by the consumer of the stream
     res.end();
   });
 });
 
 app.post('/resize', (req, res) => {
-  const resizeRequestBody = req.body as ResizeRequestBody;
-  const found = state.find((value) => value.id === resizeRequestBody.id);
+  const resizeEventData: ResizeEventData = req.body as ResizeRequestBody;
+  const found = state.addEvents.find((x) => x.uuid === resizeEventData.uuid);
   if (found) {
+    found.x = resizeEventData.x;
+    found.y = resizeEventData.y;
+    found.w = resizeEventData.w;
+    found.h = resizeEventData.w;
     res.sendStatus(200);
-    found.x = resizeRequestBody.x;
-    found.y = resizeRequestBody.y;
-    found.w = resizeRequestBody.w;
-    found.h = resizeRequestBody.w;
+
     const sse = new ServerSentEvent(
-      JSON.stringify(resizeRequestBody),
-      eventIdCounter.toString(),
+      JSON.stringify(resizeEventData),
+      uuidv4(),
       'resize'
     );
-    eventIdCounter++;
     events.push(sse);
-    const body = sse.toString();
-    emitter.emit('event', body);
+    emitter.emit('event', sse.toString());
   } else {
-    console.warn(`Cannot find shape with id=${resizeRequestBody.id} in state.`);
-    res.sendStatus(404);
+    res.sendStatus(204);
   }
 });
 
 app.post('/add', (req, res) => {
-  const addRequestBody = req.body as AddRequestBody;
-  const hasId: HasId = { id: idCounter++ };
-  res.status(200).json(hasId);
-  const addEventData: AddEventData = { ...addRequestBody, ...hasId };
-  state.push({ ...addEventData, selector: null });
-  const sse = new ServerSentEvent(
+  const addEventData: AddEventData = req.body as AddRequestBody;
+  state.addEvents.push(addEventData);
+  res.sendStatus(200);
+
+  const serverSentEvent = new ServerSentEvent(
     JSON.stringify(addEventData),
-    eventIdCounter.toString(),
+    uuidv4(),
     'add'
   );
-  eventIdCounter++;
-  events.push(sse);
-  const body = sse.toString();
-  emitter.emit('event', body);
+  events.push(serverSentEvent);
+  emitter.emit('event', serverSentEvent.toString());
 });
 
 app.post('/remove', (req, res) => {
-  const hasId = req.body as HasId;
-  const i = state.findIndex((value) => value.id == hasId.id);
-  if (i !== -1) {
+  const removeEventData: RemoveEventData = req.body as RemoveRequestBody;
+  const index = state.addEvents.findIndex(
+    (x) => x.uuid === removeEventData.uuid
+  );
+  if (index !== -1) {
+    state.addEvents.splice(index, 1);
     res.sendStatus(200);
-    state.splice(i, 1);
+
     const sse = new ServerSentEvent(
-      JSON.stringify(hasId),
-      eventIdCounter.toString(),
-      'remove'
+      JSON.stringify(removeEventData),
+      uuidv4(),
+      'resize'
     );
-    eventIdCounter++;
     events.push(sse);
-    const body = sse.toString();
-    emitter.emit('event', body);
+    emitter.emit('event', sse.toString());
   } else {
-    console.warn(`Cannot find shape with id=${hasId.id} in state.`);
-    res.sendStatus(404);
+    res.sendStatus(204);
   }
 });
 
 app.post('/select', (req, res) => {
-  const requestBody = req.body as SelectRequestBody;
-
-  // todo looks like theres similar logic in the client code
-  if (requestBody.id === null) {
-    for (const elem of state) {
-      if (elem.selector === requestBody.selector) {
-        elem.selector = null;
-      }
-    }
-  }
-
+  const selectRequestBody = req.body as SelectRequestBody;
+  select(selectRequestBody);
   res.sendStatus(200);
-  const found = state.find((value) => value.id === requestBody.id);
-  if (found) {
-    found.selector = requestBody.selector;
+});
+
+function select(selectRequestBody: SelectRequestBody) {
+  const e = state.selectEvents.find(
+    (e) => e.username === selectRequestBody.username
+  );
+  if (e !== undefined) {
+    e.uuid = selectRequestBody.uuid;
+  } else {
+    state.selectEvents.push(selectRequestBody);
   }
 
   const sse = new ServerSentEvent(
-    JSON.stringify(requestBody),
-    eventIdCounter.toString(),
+    JSON.stringify(selectRequestBody),
+    uuidv4(),
     'select'
   );
-  eventIdCounter++;
   events.push(sse);
-  const data = sse.toString();
-  emitter.emit('event', data);
-});
+  emitter.emit('event', sse.toString());
+}
 
 app.listen(port, () => {
   return console.log(`server is listening on port ${port}`);

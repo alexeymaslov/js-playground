@@ -46,10 +46,11 @@ export class CanvasWrapper {
 
     this._canvasEventHandler = new DefaultCanvasEventHandler(this);
 
-    canvas.oncontextmenu = function (e) { // disable context menu on right click
+    canvas.oncontextmenu = function (e) {
+      // disable context menu on right click
       e.preventDefault();
     };
-    
+
     canvas.addEventListener('dblclick', (ev) => {
       const mousePosition = eventCanvasPositionGetter.get(ev);
       const rectShape = new FilledShape(
@@ -64,24 +65,22 @@ export class CanvasWrapper {
       this.onRectShapeCreated(rectShape, null);
     });
 
-    canvas.addEventListener('mousedown', (ev) => this._canvasEventHandler.handleDownEvent(ev));
-    canvas.addEventListener('mousemove', (ev) => this._canvasEventHandler.handleMoveEvent(ev));
-    canvas.addEventListener('mouseup', (ev) => this._canvasEventHandler.handleUpEvent(ev));
-    canvas.addEventListener('wheel', (ev) => this._canvasEventHandler.handleScrollEvent(ev));
+    canvas.addEventListener('mousedown', (ev) =>
+      this._canvasEventHandler.handleDownEvent(ev)
+    );
+    canvas.addEventListener('mousemove', (ev) =>
+      this._canvasEventHandler.handleMoveEvent(ev)
+    );
+    canvas.addEventListener('mouseup', (ev) =>
+      this._canvasEventHandler.handleUpEvent(ev)
+    );
+    canvas.addEventListener('wheel', (ev) =>
+      this._canvasEventHandler.handleScrollEvent(ev)
+    );
 
     canvas.addEventListener('keydown', (ev) => this.handleKeyDownEvent(ev));
 
     requestAnimationFrame(() => this.draw());
-  }
-
-  getRectShapeById(id: number): RectShape | null {
-    for (const rectShape of this.rectShapes) {
-      if (rectShape.id === id) {
-        return rectShape;
-      }
-    }
-
-    return null;
   }
 
   getRectShapeByUuid(uuid: Uuid): RectShape | null {
@@ -103,9 +102,7 @@ export class CanvasWrapper {
   }
 
   addRectShape(rectShape: RectShape): void {
-    console.log(
-      `adding rectShape={id: ${rectShape.id}, uuid: ${rectShape.uuid}}`
-    );
+    console.info(`[CanvasWrapper] adding rectShape; uuid=${rectShape.uuid}`);
     this.rectShapes.push(rectShape);
     this.isValid = false;
   }
@@ -119,7 +116,7 @@ export class CanvasWrapper {
     this.invalidate();
   }
 
-  private clear() {
+  private clearCanvas() {
     const rect = this.getViewRect();
     this.context.clearRect(rect.x, rect.y, rect.width, rect.height);
   }
@@ -174,7 +171,7 @@ export class CanvasWrapper {
 
     if (this.isValid) return;
 
-    this.clear();
+    this.clearCanvas();
     this.drawDots();
     this.drawRectShapes();
     this._canvasEventHandler.draw(this.context);
@@ -190,10 +187,10 @@ export class CanvasWrapper {
     const dy = curCenter.y - prevCenter.y;
     this.move(dx, dy);
   }
-  
+
   move(dx: number, dy: number): void {
     this.context.translate(dx, dy);
-    this.invalidate()
+    this.invalidate();
   }
 
   private drawDots(): void {
@@ -232,5 +229,11 @@ export class CanvasWrapper {
     }
 
     return ret;
+  }
+
+  clear(): void {
+    this.rectShapes.splice(0, this.rectShapes.length);
+    this._canvasEventHandler = new DefaultCanvasEventHandler(this);
+    this.invalidate();
   }
 }
