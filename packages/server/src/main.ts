@@ -119,7 +119,7 @@ app.post('/resize', (req, res) => {
     found.x = resizeEventData.x;
     found.y = resizeEventData.y;
     found.w = resizeEventData.w;
-    found.h = resizeEventData.w;
+    found.h = resizeEventData.h;
     res.sendStatus(200);
 
     const sse = new ServerSentEvent(
