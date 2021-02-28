@@ -63,7 +63,7 @@ export async function saveAddEvents(events: AddEventData[]): Promise<void> {
         'INSERT INTO public.events (data) VALUES %L;',
         events.map((e) => [e]) // have to wrap each value in array
       );
-      console.log(`[DB] Querying db with '${insertSql}'`);
+      // console.log(`[DB] Querying db with '${insertSql}'`);
       await client.query(insertSql);
     }
 
