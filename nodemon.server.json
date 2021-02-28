@@ -2,6 +2,6 @@
   "watch": ["packages/shared/src", "packages/server/src"],
   "ext": ".ts,.js",
   "ignore": [],
-  "exec": "cd packages/server && npm run build && cd ../.. && node packages/server/dist/main.js"
+  "exec": "cd packages/server && npm run build && cd ../.. && node -r dotenv/config packages/server/dist/main.js"
 }
 

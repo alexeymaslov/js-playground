@@ -11,23 +11,19 @@ export type ImageRectData = RectData & { imageSource: string };
 export type ShapeData = FilledRectData | ImageRectData;
 
 export type Uuid = string;
-
-export type HasId = { id: number };
-export type MaybeHasId = { id: number | null };
-export type MaybeHasSelector = { selector: string | null };
 export type HasUuid = { uuid: Uuid };
+export type HasUsername = { username: string };
 
 export type AddRequestBody = ShapeData & HasUuid;
-export type AddResponseBody = HasId;
-export type AddEventData = AddRequestBody & HasId;
+export type AddEventData = AddRequestBody;
 
-export type ResizeRequestBody = RectData & HasId;
+export type ResizeRequestBody = RectData & HasUuid;
 export type ResizeEventData = ResizeRequestBody;
 
-export type RemoveRequestBody = HasId;
+export type RemoveRequestBody = HasUuid;
 export type RemoveEventData = RemoveRequestBody;
 
-export type SelectRequestBody = MaybeHasId & MaybeHasSelector;
+export type SelectRequestBody = { uuid: Uuid | null } & HasUsername;
 export type SelectEventData = SelectRequestBody;
 
 export function isImageRectData(
