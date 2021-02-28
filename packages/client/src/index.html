@@ -1,12 +1,22 @@
 <!DOCTYPE html>
 <html lang='en'>
-  <head>
-    <meta charset='UTF-8'>
-    <title>Roll 22</title>
-  </head>
-  <body>
-    <h1>Roll 22</h1>
-    <p id='hello_username_text'>Hello, <i>username</i></p>
-    <canvas id='canvas' width='900' height='450' tabindex='1000'></canvas>
-  </body>
+<head>
+  <meta charset='UTF-8'>
+  <title>Roll 22</title>
+</head>
+<body>
+<div class='box'>
+  <div class='panel'>
+    <button id='roll_button'>🎲 roll</button>
+    <button disabled>👤 <span id='username'>username</span></button>
+    <button id='chat_button' class='start_right_section'>💬 chat</button>
+    <button disabled>🔗 connected</button>
+  </div>
+  <div class='content'>
+    <canvas class='canvas' id='canvas' tabindex='1000'></canvas>
+    <div class='chat' id='chat'>CHAT</div>
+    <div class='roll' id='roll'>ROLL</div>
+  </div>
+</div>
+</body>
 </html>

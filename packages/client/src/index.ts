@@ -22,6 +22,8 @@ if (!(canvas instanceof HTMLCanvasElement))
   throw new Error(
     `Element with id=canvas should be instance of HTMLCanvasElement.`
   );
+const canvasParent: HTMLElement =
+  canvas.parentElement ?? error('canvas must have parent element');
 
 const userInfo = getUserInfo();
 const username = userInfo.username;
@@ -109,6 +111,7 @@ const onRectShapeSelected = (rectShape: RectShape | null) => {
 const eventCanvasPositionGetter = new EventCanvasPositionGetter(canvas);
 const canvasWrapper = new CanvasWrapper(
   canvas,
+  canvasParent,
   eventCanvasPositionGetter,
   onRectShapeCreated,
   onRectShapeUpdated,
@@ -119,11 +122,20 @@ initDragAndDrop(canvas, canvasWrapper);
 
 setupEventSource(backendUrl, canvasWrapper, username);
 
-const paragraph = document.getElementById(
-  'hello_username_text'
-) as HTMLParagraphElement;
-if (paragraph.textContent !== null) {
-  paragraph.textContent = paragraph.textContent.replace('username', username);
-} else {
-  paragraph.textContent = `Hello, ${username}`;
-}
+const usernameElement: HTMLElement =
+  document.getElementById('username') ?? error("There's no #username element");
+usernameElement.innerText = username;
+
+const chat: HTMLElement =
+  document.getElementById('chat') ?? error("There's no #chat element");
+const chatButton: HTMLButtonElement =
+  (document.getElementById('chat_button') as HTMLButtonElement) ??
+  error("There's no #chat_button element");
+chatButton.onclick = (_ev) => (chat.hidden = !chat.hidden);
+
+const roll: HTMLElement =
+  document.getElementById('roll') ?? error("There's no #roll element");
+const rollButton: HTMLButtonElement =
+  (document.getElementById('roll_button') as HTMLButtonElement) ??
+  error("There's no #roll_button element");
+rollButton.onclick = (_ev) => (roll.hidden = !roll.hidden);

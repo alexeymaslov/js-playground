@@ -1,15 +1,86 @@
-canvas {
-    border: solid DarkSlateGray;
-    border-width: thin thin thin thick;
+:root {
+    --panel-bg-color: #f2f2f2;
+    --panel-button-hover-color: #d9d9d9;
+    --panel-button-active-color: #bdbdbd;
 }
 
-.highlight {
-    border-style: dashed;
+html, body {
+    margin: 0;
+    height: 100%;
 }
 
-.container {
+.box {
+    height: 100%;
     display: flex;
-    flex-direction: column;
-    align-content: center;
-    align-items: center;
+    flex-flow: column;
+}
+
+.content {
+    flex: 1 1 auto;
+    /* The above is shorthand for:
+    flex-grow: 1,
+    flex-shrink: 1,
+    flex-basis: auto
+    */
+    display: grid;
+    grid-template-columns: 10% auto 20%;
+    grid-template-rows: 10% 20% auto;
+    grid-template-areas:
+                  "roll c chat"
+                  "c c chat"
+                  "c c c";
+}
+
+.panel {
+    flex: 0 1 10px;
+    display: flex;
+    flex-flow: row;
+    background: var(--panel-bg-color);
+}
+
+.panel button {
+    background: var(--panel-bg-color);
+    transition-duration: 0.2s;
+    border: none;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+.panel button:hover {
+    background: var(--panel-button-hover-color);
+}
+
+.panel button:active {
+    background: var(--panel-button-active-color);
+}
+
+.panel button:disabled {
+    background: var(--panel-bg-color);
+    opacity: 1;
+}
+
+.start_right_section {
+    margin-left: auto;
+}
+
+.canvas {
+    display: block;
+    position: absolute;
+    grid-row: 1 / 4;
+    grid-column: 1 / 4;
+    z-index: 0;
+}
+
+.chat {
+    background: aquamarine;
+    grid-column: 3 / 4;
+    grid-row: 1 / 3;
+    z-index: 1;
+}
+
+.roll {
+    background: blueviolet;
+    grid-column: 1 / 2;
+    grid-row: 1 / 2;
+    z-index: 1;
 }
