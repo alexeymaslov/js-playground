@@ -3,6 +3,7 @@ import EventEmitter from 'events';
 import {
   AddEventData,
   AddRequestBody,
+  MessageRequestBody,
   RemoveEventData,
   RemoveRequestBody,
   ResizeEventData,
@@ -103,9 +104,20 @@ app.get('/events', async (req, res) => {
 
   emitter.on('event', eventHandler);
 
+  message({
+    author: `${username} has joined`,
+    time: new Date(),
+    text: ''
+  });
+
   res.on('close', () => {
     console.log(`Client with username=${username} dropped me.`);
     select({ username: username, uuid: null });
+    message({
+      author: `${username} has left`,
+      time: new Date(),
+      text: ''
+    });
     emitter.removeListener('event', eventHandler);
     clearInterval(heartbeatTimeout);
     res.end();
@@ -189,6 +201,27 @@ function select(selectRequestBody: SelectRequestBody) {
     JSON.stringify(selectRequestBody),
     uuidv4(),
     'select'
+  );
+  events.push(sse);
+  emitter.emit('event', sse.toString());
+}
+
+app.post('/message', (req, res) => {
+  const messageRequestBody = req.body as MessageRequestBody;
+  message(messageRequestBody);
+  res.sendStatus(200);
+});
+
+function message(eventData: {
+  author: string;
+  time: string | Date;
+  text: string;
+}) {
+  // todo should chat be saved to state?
+  const sse = new ServerSentEvent(
+    JSON.stringify(eventData),
+    uuidv4(),
+    'message'
   );
   events.push(sse);
   emitter.emit('event', sse.toString());

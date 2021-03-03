@@ -2,6 +2,7 @@ import { ImageShape } from './imageShape';
 import { FilledShape } from './filledShape';
 import {
   AddEventData,
+  MessageEventData,
   isFilledRectData,
   isImageRectData,
   RemoveEventData,
@@ -9,11 +10,13 @@ import {
   SelectEventData
 } from '@my/shared';
 import { CanvasWrapper } from './canvasWrapper';
+import { Chat } from './chat';
 
 export function setupEventSource(
   backendUrl: string,
   canvasWrapper: CanvasWrapper,
   username: string,
+  chat: Chat,
   shouldClearCanvasOnOpen?: boolean
 ): void {
   const url = `${backendUrl}/events?username=${username}`;
@@ -47,7 +50,7 @@ export function setupEventSource(
         '[EventSource] Connection to /events has errored. Setting up new EventSource in 10 seconds...'
       );
       setTimeout(
-        () => setupEventSource(backendUrl, canvasWrapper, username, true),
+        () => setupEventSource(backendUrl, canvasWrapper, username, chat, true),
         10000
       );
     }
@@ -154,5 +157,19 @@ export function setupEventSource(
 
   eventSource.addEventListener('heartbeat', (_evt) => {
     console.debug('[EventSource] heartbeat');
+  });
+
+  eventSource.addEventListener('message', (ev) => {
+    if (ev instanceof MessageEvent) {
+      const messageEventData = JSON.parse(ev.data) as MessageEventData;
+      console.log('[EventSource] message:', messageEventData);
+
+      const chatMessage = {
+        author: messageEventData.author,
+        time: new Date(messageEventData.time),
+        text: messageEventData.text
+      };
+      chat.addMessage(chatMessage);
+    }
   });
 }

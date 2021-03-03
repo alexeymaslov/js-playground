@@ -13,6 +13,7 @@ import './styles.css';
 import { initDragAndDrop } from './initDragAndDrop';
 import { getUserInfo } from './getUserInfo';
 import { setupEventSource } from './setupEventSource';
+import { Chat, ChatMessage } from './chat';
 
 const backendUrl: string =
   process.env.BACKEND_URL ?? error('BACKEND_URL is not defined.');
@@ -120,22 +121,48 @@ const canvasWrapper = new CanvasWrapper(
 );
 initDragAndDrop(canvas, canvasWrapper);
 
-setupEventSource(backendUrl, canvasWrapper, username);
+const sendMessage = (chatMessage: ChatMessage) => {
+  fetch(`${backendUrl}/message`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(chatMessage)
+  });
+};
+
+const messages: HTMLUListElement =
+  (document.getElementById('messages') as HTMLUListElement) ??
+  error("There's no #messages element");
+const chatInput: HTMLInputElement =
+  (document.getElementById('chat_input') as HTMLInputElement) ??
+  error("There's no #chat_input element");
+const chat = new Chat(messages, chatInput, username, sendMessage);
+
+setupEventSource(backendUrl, canvasWrapper, username, chat);
 
 const usernameElement: HTMLElement =
   document.getElementById('username') ?? error("There's no #username element");
 usernameElement.innerText = username;
 
-const chat: HTMLElement =
+const chatElement: HTMLElement =
   document.getElementById('chat') ?? error("There's no #chat element");
 const chatButton: HTMLButtonElement =
   (document.getElementById('chat_button') as HTMLButtonElement) ??
   error("There's no #chat_button element");
-chatButton.onclick = (_ev) => (chat.hidden = !chat.hidden);
+chatButton.onclick = (_ev) => toggleHidden(chatElement);
 
 const roll: HTMLElement =
   document.getElementById('roll') ?? error("There's no #roll element");
 const rollButton: HTMLButtonElement =
   (document.getElementById('roll_button') as HTMLButtonElement) ??
   error("There's no #roll_button element");
-rollButton.onclick = (_ev) => (roll.hidden = !roll.hidden);
+rollButton.onclick = (_ev) => toggleHidden(roll);
+
+function toggleHidden(element: HTMLElement): void {
+  if (element.classList.contains('hidden')) {
+    element.classList.remove('hidden');
+  } else {
+    element.classList.add('hidden');
+  }
+}
