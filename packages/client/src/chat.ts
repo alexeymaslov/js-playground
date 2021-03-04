@@ -2,6 +2,7 @@ export type ChatMessage = {
   author: string;
   time: Date;
   text: string;
+  color: string;
 };
 
 export class Chat {
@@ -11,7 +12,7 @@ export class Chat {
     messagesElement: HTMLUListElement,
     inputElement: HTMLInputElement,
     username: string,
-    sendMessage: (message: ChatMessage) => void
+    sendMessage: (message: Omit<ChatMessage, 'color'>) => void
   ) {
     this.messagesElement = messagesElement;
     inputElement.onkeypress = (ev) => {
@@ -38,6 +39,7 @@ export class Chat {
     }`;
     liElement.textContent = message.text;
     liElement.prepend(smallElement);
+    liElement.style.backgroundColor = message.color;
     this.messagesElement.appendChild(liElement);
     this.scrollBottom();
   }

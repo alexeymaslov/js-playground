@@ -1,6 +1,7 @@
 import { Client } from 'pg';
-import { AddEventData, error } from '@my/shared';
+import { error } from '@my/shared';
 import format from 'pg-format';
+import { isState, State } from './state';
 
 const DATABASE_URL =
   process.env.DATABASE_URL ?? error('DATABASE_URL is not defined.');
@@ -25,32 +26,43 @@ async function disconnect(client: Client): Promise<void> {
   console.log('[DB] Closed connection to db');
 }
 
-export async function getAddEvents(): Promise<AddEventData[]> {
-  console.group('[DB] get events from db');
-  console.time('[DB] get events');
-  const events = [];
+export async function getState(): Promise<State> {
+  console.group('[DB] get state from db');
+  console.time('[DB] get state');
+  let state: State = {
+    authorInfo: [],
+    messageEvents: [],
+    addEvents: [],
+    selectEvents: []
+  };
   try {
     const client = await connect();
     const sql = 'SELECT data FROM public.events';
     console.log(`[DB] Querying db with '${sql}'`);
     const rs = await client.query(sql);
-    for (const row of rs.rows) {
-      events.push(row.data as AddEventData);
+    if (rs.rowCount > 0) {
+      const data = rs.rows[0].data;
+      if (isState(data)) {
+        state = data;
+      } else {
+        console.log(`[DB] Data from db is not of 'State' type`);
+      }
+    } else {
+      console.log(`[DB] There is no data`);
     }
 
-    console.log(`[DB] Got ${events.length} events`);
     await disconnect(client);
   } finally {
-    console.timeEnd('[DB] get events');
+    console.timeEnd('[DB] get state');
     console.groupEnd();
   }
 
-  return events;
+  return state;
 }
 
-export async function saveAddEvents(events: AddEventData[]): Promise<void> {
-  console.group('[DB] save events to db');
-  console.time('[DB] save events');
+export async function saveState(state: State): Promise<void> {
+  console.group('[DB] save state to db');
+  console.time('[DB] save state');
   try {
     const client = await connect();
 
@@ -58,20 +70,14 @@ export async function saveAddEvents(events: AddEventData[]): Promise<void> {
     console.log(`[DB] Querying db with '${deleteSql}'`);
     await client.query(deleteSql);
 
-    if (events.length !== 0) {
-      const insertSql = format(
-        'INSERT INTO public.events (data) VALUES %L;',
-        events.map((e) => [e]) // have to wrap each value in array
-      );
-      // console.log(`[DB] Querying db with '${insertSql}'`);
-      await client.query(insertSql);
-    }
-
-    console.log(`[DB] Inserted ${events.length} rows`);
+    const insertSql = format('INSERT INTO public.events (data) VALUES %L;', [
+      [state]
+    ]);
+    await client.query(insertSql);
 
     await disconnect(client);
   } finally {
-    console.timeEnd('[DB] save events');
+    console.timeEnd('[DB] save state');
     console.groupEnd();
   }
 }

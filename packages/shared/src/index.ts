@@ -27,7 +27,7 @@ export type SelectRequestBody = { uuid: Uuid | null } & HasUsername;
 export type SelectEventData = SelectRequestBody;
 
 export type MessageRequestBody = { author: string; time: string; text: string };
-export type MessageEventData = MessageRequestBody;
+export type MessageEventData = MessageRequestBody & { color: string };
 
 export function isImageRectData(
   shapeData: ShapeData

@@ -6,3 +6,4 @@ packages/server/dist
 packages/client/public/scripts
 packages/shared/dist
 webpack.config.js
+jest.config.js

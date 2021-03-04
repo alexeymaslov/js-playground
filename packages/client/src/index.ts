@@ -121,7 +121,7 @@ const canvasWrapper = new CanvasWrapper(
 );
 initDragAndDrop(canvas, canvasWrapper);
 
-const sendMessage = (chatMessage: ChatMessage) => {
+const sendMessage = (chatMessage: Omit<ChatMessage, 'color'>) => {
   fetch(`${backendUrl}/message`, {
     method: 'POST',
     headers: {

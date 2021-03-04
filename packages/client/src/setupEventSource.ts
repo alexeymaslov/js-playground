@@ -167,7 +167,8 @@ export function setupEventSource(
       const chatMessage = {
         author: messageEventData.author,
         time: new Date(messageEventData.time),
-        text: messageEventData.text
+        text: messageEventData.text,
+        color: messageEventData.color
       };
       chat.addMessage(chatMessage);
     }
