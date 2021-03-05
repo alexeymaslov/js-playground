@@ -139,7 +139,13 @@ const chatInput: HTMLInputElement =
   error("There's no #chat_input element");
 const chat = new Chat(messages, chatInput, username, sendMessage);
 
-setupEventSource(backendUrl, canvasWrapper, username, chat);
+const connectionStateText =
+  (document.getElementById('connection_state_text') as HTMLSpanElement) ??
+  error("There's no #connection_state_text element");
+
+setupEventSource(backendUrl, canvasWrapper, username, chat, (s) => {
+  connectionStateText.textContent = s;
+});
 
 const usernameElement: HTMLElement =
   document.getElementById('username') ?? error("There's no #username element");

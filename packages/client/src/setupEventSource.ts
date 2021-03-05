@@ -17,13 +17,16 @@ export function setupEventSource(
   canvasWrapper: CanvasWrapper,
   username: string,
   chat: Chat,
+  onConnectionStatusChange: (connectionStatus: string) => void,
   shouldClearCanvasOnOpen?: boolean
 ): void {
   const url = `${backendUrl}/events?username=${username}`;
   console.log(`[EventSource] Opening connection to ${url}`);
+  onConnectionStatusChange('connecting');
   const eventSource = new EventSource(url);
 
   eventSource.onopen = () => {
+    onConnectionStatusChange('connected');
     if (shouldClearCanvasOnOpen !== undefined && shouldClearCanvasOnOpen) {
       console.log(
         '[EventSource] Opened a new connection to /events after error. Clearing canvas'
@@ -37,6 +40,7 @@ export function setupEventSource(
 
   eventSource.onerror = () => {
     if (eventSource.readyState === EventSource.CONNECTING) {
+      onConnectionStatusChange('connecting');
       // should reconnect automatically
       console.log(
         '[EventSource] Connection to /events has errored. Reconnecting automatically...'
@@ -45,12 +49,21 @@ export function setupEventSource(
       // have to setup new eventSource and reinit canvas when connected
       window.removeEventListener('beforeunload', beforeUnloadHandler);
       eventSource.close();
+      onConnectionStatusChange('disconnected');
 
       console.warn(
         '[EventSource] Connection to /events has errored. Setting up new EventSource in 10 seconds...'
       );
       setTimeout(
-        () => setupEventSource(backendUrl, canvasWrapper, username, chat, true),
+        () =>
+          setupEventSource(
+            backendUrl,
+            canvasWrapper,
+            username,
+            chat,
+            onConnectionStatusChange,
+            true
+          ),
         10000
       );
     }
@@ -62,6 +75,7 @@ export function setupEventSource(
       '[EventSource] Closing connection to /events on "beforeunload" event.'
     );
     eventSource.close();
+    onConnectionStatusChange('disconnected');
   };
 
   window.addEventListener('beforeunload', beforeUnloadHandler);
