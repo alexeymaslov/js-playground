@@ -18,15 +18,43 @@ import { ServerSentEvent } from './serverSentEvent';
 import { State } from './state';
 import Timeout = NodeJS.Timeout;
 import { getState, saveState } from './db';
+import { Server } from 'http';
 
-// todo looks like it is a bad practise to catch it like that
 process.on('uncaughtException', function (err) {
-  console.log(err);
+  console.error('Uncaught Exception: ', err);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled rejection at ', promise, 'reason: ', reason);
+  process.exit(1);
 });
 
 process.on('SIGTERM', () => {
-  console.log('[Main] SIGTERM. Saving state to db');
-  save();
+  const saveToDb = () => {
+    console.log('[Main] SIGTERM. Saving state to db');
+    save()
+      .then(() => process.exit(0))
+      .catch((err) => {
+        console.error('[Main] Failed to save events to db', err);
+        process.exit(1);
+      });
+  };
+
+  if (server !== null) {
+    console.log('[Main] SIGTERM. Closing server');
+    server.close((err?) => {
+      if (err !== undefined) {
+        console.error('[Main] SIGTERM. Error on server closing:', err);
+      } else {
+        console.log('[Main] SIGTERM. Closed server');
+      }
+
+      saveToDb();
+    });
+  } else {
+    saveToDb();
+  }
 });
 
 const port = parseInt(process.env['PORT'] || '5000');
@@ -287,11 +315,12 @@ async function save() {
   });
 }
 
+let server: Server | null = null;
 getState()
   .then((s) => (state = s))
   .catch((err) => console.error('[Main] Failed to get events from db', err))
   .finally(() => {
-    app.listen(port, () => {
+    server = app.listen(port, () => {
       return console.log(`[Main] Server is listening on port=${port}`);
     });
   });

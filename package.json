@@ -5,6 +5,7 @@
   "scripts": {
     "deploy current branch to heroku": "git push heroku HEAD:master",
     "deploy master to heroku": "git push heroku master",
+    "heroku logs": "heroku logs --tail",
     "build": "cd packages/client && npm run build && cd ../server && npm run build",
     "nodemon:client": "nodemon --config nodemon.client.json",
     "nodemon:server": "nodemon --inspect --config nodemon.server.json"
