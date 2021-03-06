@@ -14,7 +14,9 @@ jobs:
         node-version: 12
     - name: yarn install
       run: yarn install
+    - name: plugin install
+      run: npm install @typescript-eslint/eslint-plugin@latest --save-dev
     - name: eslint
       uses: icrawl/action-eslint@v1
       with:
-        custom-glob: /home/runner/work/js-playground/js-playground/packages # only if a different glob is needed, default: src
+        custom-glob: packages # only if a different glob is needed, default: src
