@@ -14,6 +14,8 @@ import { initDragAndDrop } from './initDragAndDrop';
 import { getUserInfo } from './getUserInfo';
 import { setupEventSource } from './setupEventSource';
 
+kokoko%^7*sdf
+
 const backendUrl: string =
   process.env.BACKEND_URL ?? error('BACKEND_URL is not defined.');
 
