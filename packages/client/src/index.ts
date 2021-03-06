@@ -62,7 +62,7 @@ const onRectShapeCreated = (
   });
 };
 
-const onRectShapeUpdated = (rectShape: string) => {
+const onRectShapeUpdated = (rectShape: RectShape) => {
   const body: ResizeRequestBody = {
     x: rectShape.x,
     y: rectShape.y,
