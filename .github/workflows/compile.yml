@@ -1,20 +1,18 @@
-on:
-  push:
-  pull_request:
+on: 
+    push:
+    pull_request:
 
 jobs:
-  tsc:
-    name: tsc
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v1
-    - name: install node v12
-      uses: actions/setup-node@v1
-      with:
-        node-version: 12
-    - name: yarn install
-      run: yarn install
-    - name: typescript install
-      run: npm install typescript --save-dev
-    - name: tsc
-      uses: icrawl/action-tsc@v1
+    build:
+        runs-on: ubuntu-latest
+        steps: 
+            - name: Checkout project
+              uses: actions/checkout@v2
+            - name: Setup Node.js
+              uses: actions/setup-node@v2.1.4
+              with:
+                node-version: 12
+            - name: Build and push
+              uses: alexthemaster/action-build-typescript@v1.2.1 # check the releases tab on the right for versions (looks like this: v1.0.0)
+              # use this if you want the sharpest of cutting edges (can and probably WILL break from time to time)
+              # uses: alexthemaster/action-build-typescript@master
