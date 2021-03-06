@@ -14,8 +14,8 @@ jobs:
         node-version: 12
     - name: yarn install
       run: yarn install
-    - name: plugin install
-      run: npm install @typescript-eslint/eslint-plugin@latest --save-dev
+    - name: typescript install
+      run: npm install typescript --save-dev
     - name: eslint
       uses: icrawl/action-eslint@v1
       with:
