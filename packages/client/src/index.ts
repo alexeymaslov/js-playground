@@ -4,7 +4,6 @@ import { EventCanvasPositionGetter } from './eventCanvasPositionGetter';
 import { RectShape } from './rectShape';
 import {
   AddRequestBody,
-  AddResponseBody,
   RemoveRequestBody,
   ResizeRequestBody,
   SelectRequestBody,
@@ -28,7 +27,7 @@ const userInfo = getUserInfo();
 const username = userInfo.username;
 export const color = userInfo.color;
 
-const onRectShapeCreated = async (
+const onRectShapeCreated = (
   rectShape: RectShape,
   imageSource: string | null = null
 ) => {
@@ -53,29 +52,23 @@ const onRectShapeCreated = async (
     };
   }
 
-  const response = await fetch(`${backendUrl}/add`, {
+  // todo handle error here and delete rect from canvasWrapper
+  fetch(`${backendUrl}/add`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(body)
   });
-  const responseBody = (await response.json()) as AddResponseBody;
-  rectShape.id = responseBody.id;
 };
 
 const onRectShapeUpdated = (rectShape: RectShape) => {
-  if (rectShape.id == null) {
-    console.log('Will not send resize update because rect shape is missing id');
-    return;
-  }
-
   const body: ResizeRequestBody = {
     x: rectShape.x,
     y: rectShape.y,
     w: rectShape.w,
     h: rectShape.h,
-    id: rectShape.id
+    uuid: rectShape.uuid
   };
   fetch(`${backendUrl}/resize`, {
     method: 'POST',
@@ -87,13 +80,8 @@ const onRectShapeUpdated = (rectShape: RectShape) => {
 };
 
 const onRectShapeDeleted = (rectShape: RectShape) => {
-  if (rectShape.id == null) {
-    console.log('Will not send remove update because rect shape is missing id');
-    return;
-  }
-
   const body: RemoveRequestBody = {
-    id: rectShape.id
+    uuid: rectShape.uuid
   };
   fetch(`${backendUrl}/remove`, {
     method: 'POST',
@@ -105,15 +93,9 @@ const onRectShapeDeleted = (rectShape: RectShape) => {
 };
 
 const onRectShapeSelected = (rectShape: RectShape | null) => {
-  if (rectShape !== null && rectShape.id == null) {
-    console.log('Will not send select update because rect shape is missing id');
-    return;
-  }
-
-  const id = rectShape === null ? null : rectShape.id;
   const body: SelectRequestBody = {
-    id: id,
-    selector: username
+    uuid: rectShape?.uuid ?? null,
+    username: username
   };
   fetch(`${backendUrl}/select`, {
     method: 'POST',

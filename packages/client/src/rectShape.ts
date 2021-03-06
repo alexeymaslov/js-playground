@@ -1,18 +1,10 @@
-import {
-  MaybeHasId,
-  MaybeHasSelector,
-  HasUuid,
-  RectData,
-  Uuid
-} from '@my/shared';
+import { HasUuid, RectData, Uuid } from '@my/shared';
 
-export abstract class RectShape
-  implements RectData, HasUuid, MaybeHasSelector, MaybeHasId {
+export abstract class RectShape implements RectData, HasUuid {
   x: number;
   y: number;
   w: number;
   h: number;
-  id: number | null = null;
   uuid: Uuid;
   private _selector: string | null = null;
   private selectorColor: string | null = null;
