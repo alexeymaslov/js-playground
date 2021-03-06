@@ -14,5 +14,7 @@ jobs:
         node-version: 12
     - name: yarn install
       run: yarn install
+    - name: typescript install
+      run: npm install typescript --save-dev
     - name: tsc
       uses: icrawl/action-tsc@v1
