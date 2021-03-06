@@ -14,8 +14,6 @@ import { initDragAndDrop } from './initDragAndDrop';
 import { getUserInfo } from './getUserInfo';
 import { setupEventSource } from './setupEventSource';
 
-test_ts_error_reporter;
-
 const backendUrl: string =
   process.env.BACKEND_URL ?? error('BACKEND_URL is not defined.');
 
