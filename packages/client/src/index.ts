@@ -13,6 +13,7 @@ import './styles.css';
 import { initDragAndDrop } from './initDragAndDrop';
 import { getUserInfo } from './getUserInfo';
 import { setupEventSource } from './setupEventSource';
+import { Chat, ChatMessage } from './chat';
 
 const backendUrl: string =
   process.env.BACKEND_URL ?? error('BACKEND_URL is not defined.');
@@ -22,6 +23,8 @@ if (!(canvas instanceof HTMLCanvasElement))
   throw new Error(
     `Element with id=canvas should be instance of HTMLCanvasElement.`
   );
+const canvasParent: HTMLElement =
+  canvas.parentElement ?? error('canvas must have parent element');
 
 const userInfo = getUserInfo();
 const username = userInfo.username;
@@ -109,6 +112,7 @@ const onRectShapeSelected = (rectShape: RectShape | null) => {
 const eventCanvasPositionGetter = new EventCanvasPositionGetter(canvas);
 const canvasWrapper = new CanvasWrapper(
   canvas,
+  canvasParent,
   eventCanvasPositionGetter,
   onRectShapeCreated,
   onRectShapeUpdated,
@@ -117,13 +121,54 @@ const canvasWrapper = new CanvasWrapper(
 );
 initDragAndDrop(canvas, canvasWrapper);
 
-setupEventSource(backendUrl, canvasWrapper, username);
+const sendMessage = (chatMessage: Omit<ChatMessage, 'color'>) => {
+  fetch(`${backendUrl}/message`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(chatMessage)
+  });
+};
 
-const paragraph = document.getElementById(
-  'hello_username_text'
-) as HTMLParagraphElement;
-if (paragraph.textContent !== null) {
-  paragraph.textContent = paragraph.textContent.replace('username', username);
-} else {
-  paragraph.textContent = `Hello, ${username}`;
+const messages: HTMLUListElement =
+  (document.getElementById('messages') as HTMLUListElement) ??
+  error("There's no #messages element");
+const chatInput: HTMLInputElement =
+  (document.getElementById('chat_input') as HTMLInputElement) ??
+  error("There's no #chat_input element");
+const chat = new Chat(messages, chatInput, username, sendMessage);
+
+const connectionStateText =
+  (document.getElementById('connection_state_text') as HTMLSpanElement) ??
+  error("There's no #connection_state_text element");
+
+setupEventSource(backendUrl, canvasWrapper, username, chat, (s) => {
+  connectionStateText.textContent = s;
+});
+
+const usernameElement: HTMLElement =
+  document.getElementById('username') ?? error("There's no #username element");
+usernameElement.innerText = username;
+
+const chatElement: HTMLElement =
+  document.getElementById('chat') ?? error("There's no #chat element");
+const chatButton: HTMLButtonElement =
+  (document.getElementById('chat_button') as HTMLButtonElement) ??
+  error("There's no #chat_button element");
+chatButton.onclick = (_ev) => toggleHidden(chatElement);
+
+const roll: HTMLElement =
+  document.getElementById('roll') ?? error("There's no #roll element");
+const rollButton: HTMLButtonElement =
+  (document.getElementById('roll_button') as HTMLButtonElement) ??
+  error("There's no #roll_button element");
+rollButton.onclick = (_ev) => toggleHidden(roll);
+
+function toggleHidden(element: HTMLElement): void {
+  if (element.classList.contains('hidden')) {
+    element.classList.remove('hidden');
+  } else {
+    element.classList.add('hidden');
+  }
 }

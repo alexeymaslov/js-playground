@@ -1,6 +1,6 @@
 {
   "watch": ["packages/shared/src", "packages/client/src"],
-  "ext": ".ts,.js",
+  "ext": ".ts,.js,.html,.css",
   "ignore": [],
   "exec": "cd packages/client && npm run build:dev"
 }

@@ -10,6 +10,7 @@ import { error, Uuid, uuidv4 } from '@my/shared';
 
 export class CanvasWrapper {
   private readonly canvas: HTMLCanvasElement;
+  private readonly canvasParent: HTMLElement;
   private readonly context: CanvasRenderingContext2D;
   readonly rectShapes: RectShape[] = [];
   private isValid = false;
@@ -29,6 +30,7 @@ export class CanvasWrapper {
 
   constructor(
     canvas: HTMLCanvasElement,
+    canvasParent: HTMLElement,
     eventCanvasPositionGetter: EventCanvasPositionGetter,
     onRectShapeCreated: (rectShape: RectShape) => void,
     onRectShapeUpdated: (rectShape: RectShape) => void,
@@ -36,6 +38,7 @@ export class CanvasWrapper {
     onRectShapeSelected: (rectShape: RectShape | null) => void
   ) {
     this.canvas = canvas;
+    this.canvasParent = canvasParent;
     this.eventCanvasPositionGetter = eventCanvasPositionGetter;
     this.context =
       canvas.getContext('2d') ?? error('canvas should have 2d context.');
@@ -159,13 +162,14 @@ export class CanvasWrapper {
     requestAnimationFrame(() => this.draw());
 
     // it seems easier to handle window resize with this simple if
-    // todo remove magic constants. should determine them based on available space for canvas element (or it's parent)
+    // NB this code does not count padding of canvas
+    const parentBoundingRect = this.canvasParent.getBoundingClientRect();
     if (
-      this.canvas.width !== window.innerWidth - 20 ||
-      this.canvas.height !== window.innerHeight - 150
+      parentBoundingRect.height !== this.canvas.height ||
+      parentBoundingRect.width !== this.canvas.width
     ) {
-      this.canvas.width = window.innerWidth - 20;
-      this.canvas.height = window.innerHeight - 150;
+      this.canvas.width = parentBoundingRect.width;
+      this.canvas.height = parentBoundingRect.height;
       this.invalidate();
     }
 
@@ -200,7 +204,7 @@ export class CanvasWrapper {
       for (let y = (step * 3) / 4; y < this.canvas.height; y += step) {
         const pos = this.canvasPointToWorld(x, y);
         this.context.beginPath();
-        this.context.arc(pos.x, pos.y, 0.5 / scale, 0, 2 * Math.PI);
+        this.context.arc(pos.x, pos.y, 1 / scale, 0, 2 * Math.PI);
         this.context.fillStyle = 'DarkSlateGray';
         this.context.fill();
       }

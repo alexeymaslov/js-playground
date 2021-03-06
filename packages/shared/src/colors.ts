@@ -152,3 +152,42 @@ export const colors = [
 export function getRandomColor(): string {
   return colors[Math.floor(Math.random() * colors.length)];
 }
+
+export function getNextHue(hues: number[]): number {
+  if (hues.length === 0) {
+    return Math.floor(Math.random() * 360);
+  }
+
+  hues = hues.sort((a, b) => a - b);
+  const ds = hues.map((value, index) => {
+    if (index === hues.length - 1) {
+      return hues[0] + 360 - value;
+    } else {
+      return hues[index + 1] - value;
+    }
+  });
+
+  const m = max(ds);
+  let newHue = hues[m.i] + m.max / 2;
+  if (newHue >= 360) {
+    newHue -= 360;
+  }
+
+  return Math.floor(newHue);
+}
+
+export function max(arr: number[]): { max: number; i: number } | null {
+  if (arr.length === 0) return null;
+
+  let max = arr[0];
+  let maxIndex = 0;
+
+  for (let i = 1; i < arr.length; i++) {
+    if (arr[i] > max) {
+      maxIndex = i;
+      max = arr[i];
+    }
+  }
+
+  return { max: max, i: maxIndex };
+}
